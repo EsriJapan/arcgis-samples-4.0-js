@@ -1,9 +1,9 @@
 # Feature Layer
 
-[![](img/featureLayer.jpg)]()
+[![](img/featurelayer.png)]()
 
 ## サンプル
-[リアルタイム台風情報](http://esrijapan.github.io/arcgis-samples-js/stream-layer/seattlebus.html)
+[台風情報](https://esrijapan.github.io/arcgis-samples-4.0-js/beta/beta1/featureLayer/index.html)
 
 ## リソース
 
