@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
+  <meta name="viewport" content="initial-scale=1,maximum-scale=1,user-scalable=no"
+  />
+  <title>Vector Tile Layer</title>
+  <style>
+    html,
+    body {
+      padding: 0;
+      margin: 0;
+    }
+    
+    #paneDiv1, #paneDiv2 {
+      position: absolute;
+      top: 10px;
+      left: 50%;
+      padding: 0 12px 0 12px;
+      background-color: rgba(0, 0, 0, 0.5);
+      color: white;
+    }
+    
+  </style>
+
+  <link rel="stylesheet" href="https://js.arcgis.com/4.0beta2/esri/css/main.css">
+  <script src="https://js.arcgis.com/4.0beta2/"></script>
+
+  <script>
+    require([
+      "esri/Map",
+      "esri/views/MapView",
+      "esri/layers/VectorTileLayer",
+      "esri/layers/ArcGISTiledLayer",
+      "dojo/domReady!"
+    ], function(Map, MapView, VectorTileLayer, ArcGISTiledLayer) {
+
+      var map1 = new Map();
+      var map2 = new Map();
+
+      var view1 = new MapView({
+        container: "viewDiv1",
+        map: map1,
+        center: [-100.33, 25.69],
+        zoom: 10
+      });
+      
+      var view2 = new MapView({
+        container: "viewDiv2",
+        map: map2,
+        center: [-100.33, 25.69],
+        zoom: 10
+      });
+
+      var vectorTileLayer = new VectorTileLayer({
+        url: "http://www.arcgis.com/sharing/rest/content/items/3b8814f6ddbd485cae67e8018992246e/resources/styles/root.json"
+      });
+	  
+      var tiledLayer = new ArcGISTiledLayer({
+        url: "http://services.arcgisonline.com/arcgis/rest/services/World_Street_Map/MapServer"
+      });
+      
+      map1.add(vectorTileLayer);
+      map2.add(tiledLayer);
+      
+      view1.then(function(){
+        var handleView1Extent = view1.watch('extent', function(newValue, oldValue, property, object) {
+           view2.extent = view1.extent;
+        });
+        var handleView1Rotation = view1.watch('rotation', function(newValue, oldValue, property, object) {
+           view2.rotation = view1.rotation;
+        });        
+      }, function(error){
+        console.log(error);
+      });
+      
+      view2.then(function(){
+        var handleView2Extent = view2.watch('extent', function(newValue, oldValue, property, object) {
+           view1.extent = view2.extent;
+        });
+        var handleView2Rotation = view2.watch('rotation', function(newValue, oldValue, property, object) {
+           view1.rotation = view2.rotation;
+        });
+      }, function(error){
+        console.log(error);
+      });
+      
+    });
+  </script>
+</head>
+<body>
+  <div id="viewDiv1" style="position:absolute;left:0px;width:50%;">
+  	<div id="paneDiv1">
+      <div><p>VectorTileLayer</p></div>
+    </div>
+  </div>
+  </div>
+  <div id="viewDiv2" style="position:absolute;right:0px;width:50%;">
+  	<div id="paneDiv2">
+      <div><p>ArcGISTiledLayer</p></div>
+    </div>
+  </div>
+</body>
+</html>
