@@ -1,0 +1,69 @@
+<!DOCTYPE HTML>
+<html>
+	<head>
+		<meta charset="utf-8">
+		<meta name="viewport" content="initial-scale=1,maximum-scale=1,user-scalable=no">
+		<title>プロパティ アクセス</title>
+		<link rel="stylesheet" href="//js.arcgis.com/4.0beta1/esri/css/esri.css">
+		<style>
+			html, body {
+				padding: 0;
+				margin: 0;
+			}
+			#BasemapToggleDiv {
+				position: absolute;
+				top: 20px;
+				right: 20px;
+				z-index: 50;
+			}
+		</style>
+		<script src="//js.arcgis.com/4.0beta1/"></script>
+		<script>
+			require([
+				"esri/Map",
+				"esri/views/SceneView",
+				"esri/widgets/BasemapToggle",
+				"dojo/domReady!"
+			], function(Map, SceneView, BasemapToggle) {
+
+				// map の作成
+				var map = new Map();
+				var mapProperty = {
+					basemap: "satellite"
+				};
+				// map のプロパティを設定
+				map.set(mapProperty);
+
+				// view の作成
+				var view = new SceneView();
+				var viewProperty = {
+					container: "viewDiv",
+					map: map,
+					center: [139.692, 35.690],
+					zoom: 3
+				};
+				// view のプロパティを設定
+				view.set(viewProperty);
+
+				var toggle = new BasemapToggle({
+					map: map,
+					basemap: "topo"
+				}, "BasemapToggleDiv");
+				toggle.startup();
+
+				// watch メソッドを使い "basemap.title" を監視
+				map.watch("basemap.title", function(newValue, oldValue, property, object){
+					console.log("New value: ", newValue,	// プロパティの新しい値
+								"\nOld value: ", oldValue,	// 変化前のプロパティの値
+								"\nWatched property: ", property,	// 監視対象のプロパティ名
+								"\nWatched object: ", object);	// 監視対象のオブジェクト
+				});
+			});
+		</script>
+	</head>
+	<body>
+		<div id="viewDiv">
+			<div id="BasemapToggleDiv"></div>
+		</div>
+	</body>
+</html>
