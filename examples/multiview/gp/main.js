@@ -40,8 +40,8 @@ require([
     var view1 = new MapView({
     container: "viewDiv1",
     map: map1,
-    center: [7.59564, 46.06595],
-    scale: 10000
+    center: [7.59564, 46.13595],
+    scale: 70000
     });
     
     var view2 = new SceneView({
