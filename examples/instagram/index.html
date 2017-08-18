@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="initial-scale=1,maximum-scale=1,user-scalable=no">
+  <title>インスタグラムに投稿した写真をマッピングしてみた</title>
+  <style>
+    html,
+    body,
+    #viewDiv {
+      padding: 0;
+      margin: 0;
+      height: 100%;
+      width: 100%;
+    }
+  </style>
+
+  <link rel="stylesheet" href="https://js.arcgis.com/4.4/esri/css/main.css">
+  <script src="https://js.arcgis.com/4.4/"></script>
+
+  <script>
+    require([
+      "esri/config",
+      "esri/request",
+      "esri/Map",
+      "esri/views/MapView",
+      "esri/symbols/PictureMarkerSymbol",
+      "esri/PopupTemplate",
+      "esri/geometry/Point",
+      "esri/Graphic",
+      "dojo/_base/array",
+      "dojo/domReady!"
+    ], function(esriConfig, esriRequest, Map, MapView, PictureMarkerSymbol, PopupTemplate, Point, Graphic, array) {
+      // トークン
+      var token = location.hash.slice(1);
+
+      // プロキシの設定
+      esriConfig.request.proxyUrl = "/resource-proxy/DotNet/proxy.ashx";
+
+      // Map の作成
+      var map = new Map({
+        basemap: "topo"
+      });
+
+      // View の作成
+      var view = new MapView({
+        container: "viewDiv",
+        map: map,
+        center: [139.77, 35.68],
+        zoom: 5
+      });
+
+      view.then(function(){
+        // メディア取得のエンドポイント
+        var url = "https://api.instagram.com/v1/users/self/media/recent/?" + token;
+
+        // エンドポイントへリクエスト
+        esriRequest(url, {
+          responseType: "json"
+        }).then(function(response){
+          // レスポンスに含まれるデータ
+          var data = response.data.data;
+
+          // シンボルを作成
+          var symbol = new PictureMarkerSymbol({
+            url: "img/RedStickpin.png",
+            height: "30px",
+            width: "30px",
+            yoffset: "15px"
+          });
+
+          // ポップアップテンプレートを作成
+          var popupTemplate = new PopupTemplate({
+            title: "{name}",
+            content: [{
+              type: "media",
+              mediaInfos: [{
+                type: "image",
+                value: {
+                  sourceURL: "{imageUrl}"
+                }
+              }]
+            }, {
+              type: "text",
+              text: "{text}"
+            }],
+            actions: [{
+              id: "jump-to-link",
+              image: "img/jumpToLink.png",
+              title: "元のページを開く"
+            }]
+          });
+
+          // jump-to-link アクションを設定
+          var popup = view.popup;
+          popup.viewModel.on("trigger-action", function(evt) {
+            if (evt.action.id === "jump-to-link") {
+              var attributes = popup.viewModel.selectedFeature.attributes;
+              var info = attributes.link;
+              if (info !== null) {
+                window.open(info.trim());
+              }
+            }
+          });
+
+          // 取得したメディアに含まれる位置情報をもとに地図に表示
+          array.forEach(data, function(item){
+            // 位置情報を含む場合
+            if(item.location && item.type === "image"){
+              // 地点を作成
+              var point = new Point({
+                latitude: item.location.latitude,
+                longitude: item.location.longitude
+              });
+
+              // 属性を作成
+              var text = (item.caption) ? item.caption.text : null;
+              var attributes = {
+                name: item.location.name,
+                text: text,
+                likes: item.likes.count,
+                imageUrl: item.images.thumbnail.url,
+                link: item.link
+              }
+
+              // グラフィックを作成
+              var graphic = new Graphic({
+                geometry: point,
+                symbol: symbol,
+                attributes: attributes,
+                popupTemplate: popupTemplate
+              });
+
+              // 地図に表示
+              view.graphics.add(graphic);
+            }
+          });
+        }).otherwise(function(err){
+          console.log("err: ", err);
+        });
+      });
+    });
+  </script>
+</head>
+
+<body>
+  <div id="viewDiv"></div>
+</body>
+</html>
