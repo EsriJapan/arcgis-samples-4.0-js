@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="initial-scale=1,maximum-scale=1,user-scalable=no">
+    <title>いろは堂</title>
+
+    <!-- Calcite Web -->
+    <link rel="stylesheet" href="https://s3-us-west-1.amazonaws.com/patterns.esri.com/files/calcite-web/1.0.0-rc.8/css/calcite-web.min.css">
+
+    <!-- ArcGIS API for JavaScript -->
+    <link rel="stylesheet" href="https://js.arcgis.com/4.5/esri/css/main.css">
+
+    <!-- stylesheet -->
+    <link rel="stylesheet" href="./css/style.css">
+
+    <script>
+      var dojoConfig = {
+        packages: [{
+          name: "geolocate",
+          location: "//2gis.github.io/mock-geolocation/dist",
+          main: "geolocate"
+        }]
+      };
+    </script>
+
+    <!-- ArcGIS API for JavaScript -->
+    <script src="https://js.arcgis.com/4.5/"></script>
+
+    <script src="./js/main.js"></script>
+  </head>
+
+  <body>
+    <div class="wrapper">
+      <header>
+        <div class="grid-container padding-leader-2">
+          <div class="column-24">
+            <h1>Welcome to いろは堂</h1>
+          </div>
+        </div>
+      </header>
+      <div class="grid-container">
+        <div class="column-6 leader-2 trailer-2">
+          <div>
+            <button type="button" class="btn" id="pushBtn" disabled>プッシュ通知を有効化</button>
+            <p class="leader-1">プッシュ通知を受け取って、近くの店舗情報やお得なクーポン券をゲットしよう！</p>
+          </div>
+          <div class="leader-2">
+            <button type="button" class="btn" id="simulationBtn" disabled>シミュレーションを実行</button>
+            <p class="leader-1">プッシュ通知をシミュレーションしてみる！</p>
+          </div>
+        </div>
+        <div class="column-16 pre-1 post-1 leader-2 trailer-2">
+          <div id="viewDiv"></div>
+        </div>
+      </div>
+    </div>
+  </body>
+</html>

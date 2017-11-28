@@ -1,0 +1,16 @@
+{
+  "name": "webpushsample",
+  "version": "1.0.0",
+  "description": "",
+  "main": "app/index.html",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "author": "",
+  "license": "Apache-2.0",
+  "dependencies": {
+    "body-parser": "^1.18.2",
+    "express": "^4.16.2",
+    "web-push": "^3.2.4"
+  }
+}
