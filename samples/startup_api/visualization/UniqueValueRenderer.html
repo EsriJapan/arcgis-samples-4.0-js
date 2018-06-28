@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="initial-scale=1,maximum-scale=1,user-scalable=no">
+  <title>はじめての Web アプリケーション開発：データ可視化編</title>
+  <!--
+    次のサンプルをアレンジ：
+    https://developers.arcgis.com/javascript/latest/sample-code/sandbox/index.html?sample=intro-layers
+  -->
+  <!-- ArcGIS API for JavaScript の参照 -->
+  <link rel="stylesheet" href="https://js.arcgis.com/4.6/esri/css/main.css">
+  <script src="https://js.arcgis.com/4.6/"></script>
+  <!-- スタイル設定 -->
+  <style>
+    html,
+    body,
+    #viewDiv {
+      padding: 0;
+      margin: 0;
+      height: 100%;
+      width: 100%;
+    }
+    #layerToggle {
+      top: 20px;
+      right: 20px;
+      position: absolute;
+      z-index: 99;
+      background-color: white;
+      border-radius: 8px;
+      padding: 10px;
+      opacity: 0.75;
+    }
+    .esri-legend__service-label{
+      display:none;
+    }
+   
+    
+  </style>
+
+  <script>
+    require([
+        //"esri/config",
+        "esri/Map",
+        "esri/views/MapView",
+        "esri/layers/WebTileLayer",
+        "esri/layers/FeatureLayer",
+        "esri/widgets/Legend",
+        "esri/geometry/support/webMercatorUtils",
+        "dojo/on",
+        "dojo/domReady!"
+      ],
+      function(
+        //esriConfig, 
+        Map, 
+        MapView, 
+        WebTileLayer, 
+        FeatureLayer, 
+        Legend,
+        webMercatorUtils, 
+        on
+      ) {
+        /**********************************************************************************
+          * SceneViewで地理院タイルを読み込む時に必要な設定:MapViewの場合は不要
+          * https://developers.arcgis.com/javascript/latest/api-reference/esri-config.html
+          * esriConfig.request.corsEnabledServers.push("<hostname>.<domain>:<port>");
+         **********************************************************************************/  
+        //esriConfig.request.corsEnabledServers.push("cyberjapandata.gsi.go.jp");
+        
+        /**********************************************************************************
+        * 
+        * それぞれの値のシンボルを定義
+        * 
+        **********************************************************************************/  
+        //住宅地のシンボルを定義
+        const residenceSym ={
+          type:"simple-marker",
+          color:"#ED5151",
+          size:7,
+          outline:{
+            color:"#999999",
+            width:1
+          }
+        };
+
+        //商業地域のシンボルを定義
+        const commercialAreaSym ={
+          type:"simple-marker",
+          color:"#149ECE",
+          size:7,
+          outline:{
+            color:"#999999",
+            width:1
+          }
+        };
+
+        //工業地域のシンボルを定義
+        const industorialZoneaSym ={
+          type:"simple-marker",
+          color:"#A7C636",
+          size:7,
+          outline:{
+            color:"#999999",
+            width:1
+          }
+        };
+
+        //その他のシンボルを定義
+        const otherSym ={
+          type:"simple-marker",
+          color:"#AAAAAA",
+          size:7,
+          outline:{
+            color:"#999999",
+            width:1
+          }
+        };
+
+        /**********************************************************************************
+        * 
+        * レンダラーを定義
+        * 
+        **********************************************************************************/  
+        //レンダラーを定義
+        const renderer ={
+          type:"unique-value",
+          field:"用途",
+          defaultSymbol:otherSym,
+          defaultLabel:"その他",
+          //それぞれの値で使用するシンボルを割り当てる
+          uniqueValueInfos:[{
+            value:"住宅地",
+            symbol:residenceSym,
+            label:"住宅地"
+          },{
+            value:"商業地",
+            symbol:commercialAreaSym,
+            label:"商業地"
+          },{
+            value:"工業地",
+            symbol:industorialZoneaSym,
+            label:"工業地"
+          }]
+        };
+        
+        /**********************************************************************************
+         * 1つのWebTileLayer と 2つのFeatureLayer のインスタンスを作成
+         * 1) WebTileLayer:地理院タイル（淡色地図）
+         *    地理院タイル一覧ページ：https://maps.gsi.go.jp/development/ichiran.html
+         * 2) FeatureLayer:オープンデータとして公開されている愛知県地価公示
+         * 3) FeatureLayer:全国市区町村界データ（簡易版） Living Atlas
+         **********************************************************************************/  
+        // WebTileLayer:地理院タイル（淡色地図）
+        // 地理院タイルの形式から WebTileLayer への読み換え
+        // 【読み換え前】https://cyberjapandata.gsi.go.jp/xyz/pale/{z}/{x}/{y}.png
+        // 【読み換え後】https://cyberjapandata.gsi.go.jp/xyz/pale/{level}/{col}/{row}.png
+        const gsipaleLyr = new WebTileLayer({
+          urlTemplate:"https://cyberjapandata.gsi.go.jp/xyz/pale/{level}/{col}/{row}.png",
+          id:"gsipale",
+          opacity:0.9,
+          copyright:"地理院タイル（淡色地図）",
+          visible: false
+        });
+
+        // FeatureLayer：愛知県 地価公示：オープンデータ
+        const chikakojiLyr = new FeatureLayer({
+          url:"http://services3.arcgis.com/iH4Iz7CEdh5xTJYb/arcgis/rest/services/Aichi_ken_Chikakoji_H25/FeatureServer",
+          id:"chikakoji",
+          //上で作成したレンダラーを適用する
+          renderer: renderer
+        });
+             
+        // FeatureLayer：全国市区町村界データ（簡易版）： Living Atlas
+        const cityareaLyr = new FeatureLayer({
+          url:"http://services.arcgis.com/wlVTGRSYTzAbjjiC/arcgis/rest/services/all_Japan_shikuchoson/FeatureServer",
+          id:"cityarea",
+          opacity:0.5,
+          minScale:1500000,
+          maxScale:50000,
+          visible: false
+        });
+
+        /**********************************************************************************
+         * 
+         * Map の作成と レイヤー の追加
+         * 
+         **********************************************************************************/  
+        // Map を作成
+        // コンストラクター内でレイヤーを追加
+        const map = new Map({
+          basemap: "streets",
+          layers:[chikakojiLyr]
+        });
+        // もしくは map.add() を使って map にレイヤーを追加することも可能
+        map.add(gsipaleLyr);
+        map.add(cityareaLyr);
+        
+        // MapView を作成し map インスタンスを追加
+        const view = new MapView({  
+          container: "viewDiv",
+          map: map
+        });
+
+         // 凡例ウィジェットを作成
+         const legend = new Legend({
+          view:view,
+          leyerInfos:[chikakojiLyr]
+        });
+        view.ui.add(legend,"bottom-right");
+
+        
+        /**********************************************************************************
+         * view の ”layerview-create” イベントで
+         * コンソール内でそれらのプロパティを確認できるよう print 文で出力
+         **********************************************************************************/
+        view.on("layerview-create", function(event) {
+          if (event.layer.id === "gsipale") {
+            // gsipaleLyr view のプロパティを確認できる
+            console.log("地理院タイル（淡色地図）の LayerView が作成されました!", event.layerView);
+          }
+          if (event.layer.id === "chikakojiLyr"){
+            // chikakojiLyr view のプロパティを確認できる
+            console.log("地価公示 の LayerView が作成されました!", event.layerView);
+          }
+          if (event.layer.id === "cityareaLyr"){
+            // cityLyr view のプロパティを確認できる
+            console.log("全国市区町村界データ の LayerView が作成されました!", event.layerView);
+          }
+        });
+        /**********************************************************************************
+         * ロードされた時 もしくは すべてのプロパティにアクセスできるようになったとき
+         * layer.when('callback') で指定されるコールバック関数が実行される
+         * 
+         * 地価公示レイヤーがロードされると、view が初期表示範囲として
+         * レイヤーの表示範囲にズームしながら移動していく処理
+         **********************************************************************************/
+        view.when(function() {
+          chikakojiLyr.when(function() {
+            // 今回の FeauterLayer は緯度経度座標なので WebMercatorUtil を使って Webメルカトル座標へ変換
+            // またデータの範囲が狭いので expand で Extent を拡張している
+            const ext = webMercatorUtils.geographicToWebMercator(chikakojiLyr.fullExtent.expand(2.0));
+            view.goTo(ext);
+          });
+        });
+        const gsipaleToggle = document.getElementById("gsipaleLyr");
+        const chikakojiToggle = document.getElementById("chikakojiLyr");
+        const cityareaToggle = document.getElementById("cityareaLyr");
+        /**********************************************************************************
+         * レイヤーの visible プロパティで view 内でのレイヤーの表示/非表示を切り替えを行う
+         * なお、レイヤーが非表示状態であっても、そのレイヤーのプロパティにアクセスしたり、
+         * そのレイヤーに対して解析を実行することは可能
+         **********************************************************************************/
+        on(gsipaleToggle, "change", function() {
+          gsipaleLyr.visible = gsipaleToggle.checked;
+        });
+        on(chikakojiToggle, "change", function() {
+          chikakojiLyr.visible = chikakojiToggle.checked;
+        });
+        on(cityareaToggle, "change", function() {
+          cityareaLyr.visible = cityareaToggle.checked;
+        });
+      });
+  </script>
+</head>
+
+<body>
+  <div id="viewDiv"></div>
+  <span id="layerToggle">
+    <input type="checkbox" id="gsipaleLyr" />地理院タイル-淡色地図(WebTileLayer)<br>
+    <input type="checkbox" id="chikakojiLyr" checked />愛知県の地価公示(FeatureLayer)
+    <input type="checkbox" id="cityareaLyr"  />全国市区町村界(FeatureLayer)
+  </span>
+  
+</body>
+
+</html>
