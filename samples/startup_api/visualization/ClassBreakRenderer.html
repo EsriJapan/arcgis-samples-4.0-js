@@ -79,46 +79,46 @@
         * それぞれのクラスのシンボルを定義
         * 
         **********************************************************************************/  
-        //3340円-19100円の値のシンボルを定義
-        const Sym1 ={
-          type:"simple-marker",
-          color:"#ff00ff",
-          size:8,
-          outline:{
-            color:"#000000",
-            width:0.5
+        //3340円-191000円の値のシンボルを定義
+        const sym1 ={
+          type: "simple-marker",
+          color: "#ff00ff",
+          size: 8,
+          outline: {
+            color: "#000000",
+            width: 0.5
           }
         };
         //191001円-820000円の値のシンボルを定義
-        const Sym2 ={
-          type:"simple-marker",
-          color:"#ff00ff",
-          size:20,
-          outline:{
-            color:"#000000",
-            width:0.5
+        const sym2 = {
+          type: "simple-marker",
+          color: "#ff00ff",
+          size: 20,
+          outline: {
+            color: "#000000",
+            width: 0.5
           }
         };
 
         //820001円-2640000円のシンボルを定義
-        const Sym3 ={
-          type:"simple-marker",
-          color:"#ff00ff",
-          size:30,
-          outline:{
-            color:"#000000",
-            width:0.5
+        const sym3 = {
+          type: "simple-marker",
+          color: "#ff00ff",
+          size: 30,
+          outline: {
+            color: "#000000",
+            width: 0.5
           }
         };
 
         //2640001円-8850000円のシンボルを定義
-        const Sym4={
-          type:"simple-marker",
-          color:"#ff00ff",
-          size:40,
-          outline:{
-            color:"#000000",
-            width:0.5
+        const sym4={
+          type: "simple-marker",
+          color: "#ff00ff",
+          size: 40,
+          outline: {
+            color: "#000000",
+            width: 0.5
           }
         };
 
@@ -129,33 +129,33 @@
         **********************************************************************************/  
        
         //レンダラーを定義
-        const renderer ={
-          type:"class-breaks",
-          field:"Ｈ２６価格",
+        const renderer = {
+          type: "class-breaks",
+          field: "Ｈ２６価格",
           //クラス範囲を設定し、上で作成したシンボルをそれぞれに割り当てる
-          classBreakInfos:[{
-            minValue:3340,
-            maxValue:191000,
-            label:"3,340円～19,100円",
-            symbol:Sym1
+          classBreakInfos: [{
+            minValue: 3340,
+            maxValue: 191000,
+            label: "3,340円～191,000円",
+            symbol: sym1
           },
           {
-            minValue:191001,
-            maxValue:820000,
-            label:"191,001円～820,000円",
-            symbol:Sym2
+            minValue: 191001,
+            maxValue: 820000,
+            label: "191,001円～820,000円",
+            symbol: sym2
           },
           {
-            minValue:820001,
-            maxValue:2640000,
-            label:"820,001円～2,640,000円",
-            symbol:Sym3
+            minValue: 820001,
+            maxValue: 2640000,
+            label: "820,001円～2,640,000円",
+            symbol: sym3
           },
           {
-            minValue:2640001,
-            maxValue:8850000,
-            label:"2,640,001円～8,850,000円",
-            symbol:Sym4
+            minValue: 2640001,
+            maxValue: 8850000,
+            label: "2,640,001円～8,850,000円",
+            symbol: sym4
           }
           ]
         };
@@ -172,29 +172,29 @@
         // 【読み換え前】https://cyberjapandata.gsi.go.jp/xyz/pale/{z}/{x}/{y}.png
         // 【読み換え後】https://cyberjapandata.gsi.go.jp/xyz/pale/{level}/{col}/{row}.png
         const gsipaleLyr = new WebTileLayer({
-          urlTemplate:"https://cyberjapandata.gsi.go.jp/xyz/pale/{level}/{col}/{row}.png",
-          id:"gsipale",
-          opacity:0.9,
-          copyright:"地理院タイル（淡色地図）",
+          urlTemplate: "https://cyberjapandata.gsi.go.jp/xyz/pale/{level}/{col}/{row}.png",
+          id: "gsipale",
+          opacity: 0.9,
+          copyright: "地理院タイル（淡色地図）",
           visible: false
         });
   
         // FeatureLayer：愛知県 地価公示：オープンデータ
         const chikakojiLyr = new FeatureLayer({
-          url:"http://services3.arcgis.com/iH4Iz7CEdh5xTJYb/arcgis/rest/services/Aichi_ken_Chikakoji_H25/FeatureServer",
-          id:"chikakoji",
+          url: "http://services3.arcgis.com/iH4Iz7CEdh5xTJYb/arcgis/rest/services/Aichi_ken_Chikakoji_H25/FeatureServer",
+          id: "chikakoji",
           //上で作成したレンダラーを適用する
           renderer: renderer,
-          opacity:0.8
+          opacity: 0.8
         });
            
         // FeatureLayer：全国市区町村界データ（簡易版）： Living Atlas
         const cityareaLyr = new FeatureLayer({
-          url:"http://services.arcgis.com/wlVTGRSYTzAbjjiC/arcgis/rest/services/all_Japan_shikuchoson/FeatureServer",
-          id:"cityarea",
-          opacity:0.5,
-          minScale:1500000,
-          maxScale:50000,
+          url: "http://services.arcgis.com/wlVTGRSYTzAbjjiC/arcgis/rest/services/all_Japan_shikuchoson/FeatureServer",
+          id: "cityarea",
+          opacity: 0.5,
+          minScale: 1500000,
+          maxScale: 50000,
           visible: false
         });
 
@@ -207,7 +207,7 @@
         // コンストラクター内でレイヤーを追加
         const map = new Map({
           basemap: "streets",
-          layers:[chikakojiLyr]
+          layers: [chikakojiLyr]
         });
         // もしくは map.add() を使って map にレイヤーを追加することも可能
         map.add(gsipaleLyr);
@@ -221,8 +221,8 @@
 
          // 凡例ウィジェットを作成
          const legend = new Legend({
-          view:view,
-          leyerInfos:[chikakojiLyr]
+          view: view,
+          leyerInfos: [chikakojiLyr]
         });
         view.ui.add(legend,"bottom-right");
 
