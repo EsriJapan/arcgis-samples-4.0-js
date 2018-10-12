@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="initial-scale=1,maximum-scale=1,user-scalable=no">
+  <title>Load a basic WebMap - 4.9</title>
+
+  <style>
+    html,
+    body,
+    #viewDiv {
+      padding: 0;
+      margin: 0;
+      height: 100%;
+      width: 100%;
+    }
+
+    #layerToggle {
+      top: 20px;
+      right: 20px;
+      position: absolute;
+      z-index: 99;
+      background-color: white;
+      border-radius: 8px;
+      padding: 10px;
+      opacity: 0.75;
+    }
+  </style>
+
+  <link rel="stylesheet" href="https://js.arcgis.com/4.9/esri/css/main.css">
+  <script src="https://js.arcgis.com/4.9/"></script>
+
+  <script>
+    require([
+      "esri/views/MapView",
+      "esri/WebMap",
+      "dojo/domReady!"
+    ], function(MapView, WebMap) {
+      const webmap = new WebMap({
+        portalItem: {
+          id: "Web マップ ID"
+        }
+      });
+
+      webmap.when(function() {
+        // チェックボックスを表示する親要素
+        const ele = document.getElementById("layerToggle");
+
+        // Web マップに含まれるレイヤーを取得し、処理を実行
+        webmap.layers.forEach(function(layer) {
+          // レイヤーごとに表示/非表示を切り替えるチェックボックスを作成
+          const checkbox = document.createElement("input");
+          checkbox.type = "checkbox";
+          checkbox.id = layer.id;
+          checkbox.checked = layer.visible;
+          checkbox.onclick = function(evt) {
+            layer.visible = evt.target.checked;
+          };
+          ele.appendChild(checkbox);
+          
+          const label = document.createElement("label");
+          label.htmlFor = layer.id;
+          label.innerHTML = layer.title;
+          ele.appendChild(label);
+        });
+      });
+
+      const view = new MapView({
+        map: webmap,
+        container: "viewDiv"
+      });
+    });
+  </script>
+</head>
+
+<body>
+  <div id="viewDiv"></div>
+  <span id="layerToggle"></span>
+</body>
+</html>
