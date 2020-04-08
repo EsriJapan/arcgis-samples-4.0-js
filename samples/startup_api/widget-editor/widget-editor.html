@@ -1,0 +1,98 @@
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>続編：はじめての Web マッピングアプリケーション開発：編集ウィジェット編</title>
+<style>
+  html, body, #viewDiv {
+    padding: 0;
+    margin: 0;
+    height: 100%;
+    width: 100%;
+  }
+  .search {
+    top: 15px;
+  }
+</style>
+  <link rel="stylesheet" href="https://js.arcgis.com/4.14/esri/themes/light/main.css">
+  <script src="https://js.arcgis.com/4.14/"></script>
+  
+  <script>
+    require([
+      "esri/Map",
+      "esri/views/MapView",
+      "esri/layers/FeatureLayer",
+      "esri/widgets/Search",
+      "esri/widgets/BasemapGallery",
+      "esri/widgets/Print",
+      'esri/widgets/Expand',
+      "esri/widgets/Editor"
+    ], function(Map, MapView, FeatureLayer, Search, BasemapGallery, Print, Expand, Editor) {
+            
+      var map = new Map({
+        basemap: "topo-vector"
+      });
+      
+      var view = new MapView({
+        container: "viewDiv",  
+        map: map,
+        //center: [139.737501,35.677175],
+        center: [139.516461,35.711386],
+        //zoom: 13
+        zoom: 17
+      });
+      
+      var featurelayer = new FeatureLayer({
+        url: "https://services.arcgis.com/wlVTGRSYTzAbjjiC/arcgis/rest/services/tree_inspection/FeatureServer/1"
+      });
+
+      map.add(featurelayer);
+
+      // Search ウィジェット
+      var search = new Search({
+        view: view
+      });
+
+      // BasemapGallery ウィジェット
+      var basemapGallery = new BasemapGallery({
+        view: view,
+        source: {
+          portal: {
+            url: "https://www.arcgis.com",
+            useVectorBasemaps: true  // Load vector tile basemaps
+          }
+        }
+      });
+
+      // Print ウィジェット
+      var print = new Print({
+        view: view,
+        printServiceUrl: "https://utility.arcgisonline.com/arcgis/rest/services/Utilities/PrintingTools/GPServer/Export%20Web%20Map%20Task"
+      });
+      
+      // Editor ウィジェット
+      var editor = new Editor({
+          view: view
+      });
+
+
+      view.when(function() {
+        view.ui.add(createExpandWidgets([search, basemapGallery, print, editor]), 'top-right');
+      });
+
+      function createExpandWidgets(widgets) {
+        return widgets.map(widget => new Expand({
+              view: view,
+              content: widget,
+              expanded: false,
+              group: 'top-right'
+        }))
+      }
+    });
+  </script>
+
+</head>
+<body>
+  <div id="viewDiv"></div>
+</body>
+</html>
