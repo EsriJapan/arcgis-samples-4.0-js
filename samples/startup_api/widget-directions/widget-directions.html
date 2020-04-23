@@ -13,14 +13,9 @@
   .search {
     top: 15px;
   }
-
-  .container {
-        height: 50%;
-        width: 100%;
-      }
 </style>
-  <link rel="stylesheet" href="https://js.arcgis.com/4.15/esri/themes/light/main.css">
-  <script src="https://js.arcgis.com/4.15/"></script>
+  <link rel="stylesheet" href="https://js.arcgis.com/4.14/esri/themes/light/main.css">
+  <script src="https://js.arcgis.com/4.14/"></script>
   
   <script>
     require([
@@ -33,9 +28,8 @@
       'esri/widgets/Expand',
       "esri/widgets/Editor",
       "esri/widgets/Directions",
-      "esri/symbols/SimpleMarkerSymbol",
-      "esri/widgets/FeatureTable"
-    ], function(Map, MapView, FeatureLayer, Search, BasemapGallery, Print, Expand, Editor, Directions, SimpleMarkerSymbol, FeatureTable) {
+      "esri/symbols/SimpleMarkerSymbol"
+    ], function(Map, MapView, FeatureLayer, Search, BasemapGallery, Print, Expand, Editor, Directions, SimpleMarkerSymbol) {
             
       var map = new Map({
         basemap: "topo-vector"
@@ -47,63 +41,12 @@
         center: [139.737501,35.677175],
         zoom: 13
       });
-
       
-      
-      const featurelayer = new FeatureLayer({
+      var featurelayer = new FeatureLayer({
         url: "https://services.arcgis.com/wlVTGRSYTzAbjjiC/arcgis/rest/services/tree_inspection/FeatureServer/1"
       });
 
-      
-
       map.add(featurelayer);
-
-      const featureTable = new FeatureTable({
-        layer: featurelayer,
-        fieldConfigs: [
-              {
-                name: "OBJECTID",
-                label: "OBJECTID"
-              },
-              {
-                name: "Planted_By",
-                label: "Planted_By"
-              },
-              {
-                name: "GlobalID",
-                label: "GlobalID"
-              },
-              {
-                name: "Site_Width",
-                label: "Site_Width"
-              },
-              {
-                name: "Planted_Date",
-                label: "Planted_Date"
-              },
-              {
-                name: "Species_GlobalID",
-                label: "Species_GlobalID"
-              },
-              {
-                name: "Condition",
-                label: "Condition "
-              },
-              {
-                name: "DBH",
-                label: "DBH "
-              },
-              {
-                name: "Neighborhood",
-                label: "Neighborhood"
-              },
-              {
-                name: "Address",
-                label: "Address"
-              }
-            ],
-            container: document.getElementById("tableDiv")
-      });
 
       // Search ウィジェット
       var search = new Search({
@@ -132,7 +75,7 @@
           view: view
       });
 
-      // ナビゲーション ウィジェット
+      // Directions ウィジェット
       var directions = new Directions ({
           view: view
       });
@@ -177,8 +120,5 @@
 </head>
 <body>
   <div id="viewDiv"></div>
-  <div class="container">
-    <div id="tableDiv"></div>
-  </div>
 </body>
 </html>
