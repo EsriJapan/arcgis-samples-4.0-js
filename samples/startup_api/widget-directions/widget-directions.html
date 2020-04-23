@@ -1,0 +1,184 @@
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>続編：はじめての Web マッピングアプリケーション開発：ナビゲーション ウィジェット編</title>
+<style>
+  html, body, #viewDiv {
+    padding: 0;
+    margin: 0;
+    height: 100%;
+    width: 100%;
+  }
+  .search {
+    top: 15px;
+  }
+
+  .container {
+        height: 50%;
+        width: 100%;
+      }
+</style>
+  <link rel="stylesheet" href="https://js.arcgis.com/4.15/esri/themes/light/main.css">
+  <script src="https://js.arcgis.com/4.15/"></script>
+  
+  <script>
+    require([
+      "esri/Map",
+      "esri/views/MapView",
+      "esri/layers/FeatureLayer",
+      "esri/widgets/Search",
+      "esri/widgets/BasemapGallery",
+      "esri/widgets/Print",
+      'esri/widgets/Expand',
+      "esri/widgets/Editor",
+      "esri/widgets/Directions",
+      "esri/symbols/SimpleMarkerSymbol",
+      "esri/widgets/FeatureTable"
+    ], function(Map, MapView, FeatureLayer, Search, BasemapGallery, Print, Expand, Editor, Directions, SimpleMarkerSymbol, FeatureTable) {
+            
+      var map = new Map({
+        basemap: "topo-vector"
+      });
+      
+      var view = new MapView({
+        container: "viewDiv",  
+        map: map,
+        center: [139.737501,35.677175],
+        zoom: 13
+      });
+
+      
+      
+      const featurelayer = new FeatureLayer({
+        url: "https://services.arcgis.com/wlVTGRSYTzAbjjiC/arcgis/rest/services/tree_inspection/FeatureServer/1"
+      });
+
+      
+
+      map.add(featurelayer);
+
+      const featureTable = new FeatureTable({
+        layer: featurelayer,
+        fieldConfigs: [
+              {
+                name: "OBJECTID",
+                label: "OBJECTID"
+              },
+              {
+                name: "Planted_By",
+                label: "Planted_By"
+              },
+              {
+                name: "GlobalID",
+                label: "GlobalID"
+              },
+              {
+                name: "Site_Width",
+                label: "Site_Width"
+              },
+              {
+                name: "Planted_Date",
+                label: "Planted_Date"
+              },
+              {
+                name: "Species_GlobalID",
+                label: "Species_GlobalID"
+              },
+              {
+                name: "Condition",
+                label: "Condition "
+              },
+              {
+                name: "DBH",
+                label: "DBH "
+              },
+              {
+                name: "Neighborhood",
+                label: "Neighborhood"
+              },
+              {
+                name: "Address",
+                label: "Address"
+              }
+            ],
+            container: document.getElementById("tableDiv")
+      });
+
+      // Search ウィジェット
+      var search = new Search({
+        view: view
+      });
+
+      // BasemapGallery ウィジェット
+      var basemapGallery = new BasemapGallery({
+        view: view,
+        source: {
+          portal: {
+            url: "https://www.arcgis.com",
+            useVectorBasemaps: true  // Load vector tile basemaps
+          }
+        }
+      });
+
+      // Print ウィジェット
+      var print = new Print({
+        view: view,
+        printServiceUrl: "https://utility.arcgisonline.com/arcgis/rest/services/Utilities/PrintingTools/GPServer/Export%20Web%20Map%20Task"
+      });
+      
+      // Editor ウィジェット
+      var editor = new Editor({
+          view: view
+      });
+
+      // ナビゲーション ウィジェット
+      var directions = new Directions ({
+          view: view
+      });
+
+      // ポイントシンボル設定
+      directions.stopSymbols.first = createStopSymbol("green","14px");
+      directions.stopSymbols.middle = createStopSymbol("black","10px");
+      directions.stopSymbols.last = createStopSymbol("red","14px");
+
+      // ラインシンボル設定
+      directions.routeSymbol.width = "2";
+      directions.routeSymbol.color = [0, 0, 0, 0.75];
+      directions.routeSymbol.style = "short-dot";
+
+      view.when(function() {
+        view.ui.add(createExpandWidgets([search, basemapGallery, print, editor, directions]), 'top-right');
+      });
+
+      function createExpandWidgets(widgets) {
+        return widgets.map(widget => new Expand({
+              view: view,
+              content: widget,
+              expanded: false,
+              group: 'top-right'
+        }))
+      }
+
+      function createStopSymbol(color, size) {
+        return new SimpleMarkerSymbol({
+          style: "simple-marker",
+          size: size,
+          outline: {
+            width: "2px",
+            color: "white"
+          },
+          color: color
+        });
+      }
+    });
+  </script>
+
+</head>
+<body>
+  <div id="viewDiv"></div>
+  <div class="container">
+    <div id="tableDiv"></div>
+  </div>
+</body>
+</html>
