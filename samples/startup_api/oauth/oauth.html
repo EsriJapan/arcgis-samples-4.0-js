@@ -1,0 +1,153 @@
+<html>
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+  <meta name="viewport" content="initial-scale=1, maximum-scale=1,user-scalable=no"
+  />
+  <title>続編：はじめての Web マッピングアプリケーション開発：OAuth 編</title>
+  <link rel="stylesheet" href="https://js.arcgis.com/4.14/esri/css/main.css">
+  <script src="https://js.arcgis.com/4.14/"></script>
+  <style>
+    html,
+    body, #viewDiv{
+      font-family: Avenir Next W00;
+      font-size: 14px;
+      width: 100%;
+      height: 100%;
+      margin: 0px;
+      padding: 0px;
+    }
+    .action {
+      color: blue;
+      cursor: pointer;
+      text-decoration: underline;
+    }
+  </style>
+  <script>
+    require([
+      "esri/portal/Portal",
+      "esri/identity/OAuthInfo",
+      "esri/identity/IdentityManager",
+      "esri/Map",
+      "esri/views/MapView",
+      "esri/layers/FeatureLayer",
+      "esri/widgets/Search",
+      "esri/widgets/BasemapGallery",
+      "esri/widgets/Print",
+      'esri/widgets/Expand',
+      "esri/widgets/Editor",
+    ], function(
+        Portal, OAuthInfo, identityManager, Map, MapView, 
+        FeatureLayer, Search, BasemapGallery, Print, Expand, Editor) {
+
+      // ポータルのURL
+      var portalUrl = "https://www.arcgis.com";
+
+      var info = new OAuthInfo({
+        appId: "xxxx", //Client ID を入力してください  
+        popup: false 
+      });
+
+      // 認証情報を登録
+      identityManager.registerOAuthInfos([info]);
+
+      // ArcGIS にサイン イン
+      document.getElementById('sign-in').addEventListener('click', function(){
+        identityManager.getCredential(portalUrl);
+      }, false);
+
+      // サイン アウト
+      document.getElementById('sign-out').addEventListener('click', function(){
+        identityManager.destroyCredentials();
+        window.location.reload();
+      });
+
+      // 認証に成功した場合に地図を表示
+      identityManager.checkSignInStatus(portalUrl).then(function() {
+        document.getElementById('anonymousPanel').style.display = 'none';
+        document.getElementById('personalizedPanel').style.display = 'block';
+        editorMap();
+     });
+
+     // アプリの表示
+     function editorMap() {
+      var portal = new Portal();
+
+      // ポータルの読み込み
+      portal.load().then(function() {
+        document.getElementById('viewDiv').style.display = 'flex';
+
+        var map = new Map({
+          basemap: "topo-vector"
+        });
+
+        var view = new MapView({
+          container: "viewDiv",  
+          map: map,
+          center: [139.516461,35.711386],
+          zoom: 17
+        });
+
+        var featurelayer = new FeatureLayer({
+          url: "https://services.arcgis.com/wlVTGRSYTzAbjjiC/arcgis/rest/services/tree_inspection/FeatureServer/1"
+        });
+        
+        map.add(featurelayer);
+
+        // Search ウィジェット
+        var search = new Search({
+          view: view
+        });
+
+        // BasemapGallery ウィジェット
+        var basemapGallery = new BasemapGallery({
+          view: view,
+          source: {
+            portal: {
+              url: "https://www.arcgis.com",
+              useVectorBasemaps: true  // Load vector tile basemaps
+            }
+          }
+        });
+
+        // Print ウィジェット
+        var print = new Print({
+          view: view,
+          printServiceUrl: "https://utility.arcgisonline.com/arcgis/rest/services/Utilities/PrintingTools/GPServer/Export%20Web%20Map%20Task"
+        });
+
+        // Editor ウィジェット
+        var editor = new Editor({
+            view: view
+        });
+
+        view.when(function() {
+          view.ui.add(createExpandWidgets([search, basemapGallery, print, editor]), 'top-right');
+        });
+        
+        function createExpandWidgets(widgets) {
+          return widgets.map(widget => new Expand({
+               view: view,
+               content: widget,
+               expanded: false,
+               group: 'top-right'
+           }))
+        }      
+      });
+     }
+
+    });
+  </script>
+</head>
+<body>
+  <div id="anonymousPanel" style="display: block; padding: 5px; text-align: center;">
+    <span id="sign-in" class="action">サイン イン</span>
+  </div>
+
+  <div id="personalizedPanel" style="display: none; padding: 5px; text-align: center;">
+    Welcome <span id="userId" style="font-weight: bold;"></span> &nbsp;-&nbsp;
+    <span id="sign-out" class="action">サイン アウト</span>
+  </div>
+  <!-- for the map -->
+  <div id="viewDiv" style="display: none;"></div>
+</body>
+</html>
