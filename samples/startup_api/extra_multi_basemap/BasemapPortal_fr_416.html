@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="initial-scale=1,maximum-scale=1,user-scalable=no"/>
+    <title>Use Portal Basemaps (フランス語) - 4.16</title>
+    <link rel="stylesheet" href="https://js.arcgis.com/4.16/esri/themes/light/main.css"/>
+    <script src="https://js.arcgis.com/4.16/"></script>
+    <style>
+      html,
+      body,
+      #viewDiv {
+        padding: 0;
+        margin: 0;
+        height: 100%;
+        width: 100%;
+      }
+    </style>
+    <script>
+      require([
+        "esri/config",
+        "esri/Map",
+        "esri/portal/Portal",
+        "esri/views/MapView",
+        "esri/widgets/BasemapGallery",
+        "esri/widgets/Search",
+        "esri/widgets/Expand",
+        "esri/intl"
+      ], function(
+        esriConfig,
+        Map,
+        Portal,
+        MapView,
+        BasemapGallery,
+        Search,
+        Expand,
+        intl
+      ) {
+      
+        /************************************************************
+        // 
+        // 追加コード1: ローカライズ
+        // 
+        // UI のローカライズ : How does localization work with the ArcGIS for JavaScript API ?
+        // https://developers.arcgis.com/javascript/latest/api-reference/esri-intl.html#setLocale
+        // v4.16 以降では intl.setLocale(locale) を使うことを推奨
+        // 
+        ************************************************************/
+        //intl.setLocale("en");
+        //intl.setLocale("ja");
+        //intl.setLocale("de");
+        intl.setLocale("fr");
+
+        /************************************************************
+        // 
+        // 追加コード2: リクエストを横取りして culture と region を設定してアプリに設定
+        // 
+        // 1) 仕組み
+        //   http request を確認するとPortal にログインしないデフォルト状態だと以下のリクエストをなげている
+        //     https://www.arcgis.com/sharing/rest/portals/self?f=json&culture=ja
+        //     ※1 REST APIの仕様上 self のパラメータに culture , region があるので、それを加えるリクエストにすればよい
+        //     https://developers.arcgis.com/rest/users-groups-and-items/portal-self.htm
+        //     ※2 試しに強制的にベースマップとベースマップギャラリーを変更するために次のように culture と region 追加してリクエストをなげると英語の設定のものが戻ってくる
+        //     https://www.arcgis.com/sharing/rest/portals/self?f=json&culture=en&region=US
+        //   
+        // 2) 参考情報
+        //   culture コードは language code と country code の組合せと記載されている:
+        //     https://developers.arcgis.com/rest/users-groups-and-items/common-parameters.htm
+        //     ※1 culture コードはこれで確認できます:
+        //     https://www.arcgis.com/sharing/rest/portals/languages?f=pjson
+        //     ※2 region コードはこれで確認できます:
+        //     https://www.arcgis.com/sharing/rest/portals/regions?f=pjson
+        ************************************************************/
+        
+        // 以下が リクエスト横取りしてパラメータに culture と region を設定するコード
+        const selfUrl = "https://www.arcgis.com/sharing/rest/portals/self";
+        esriConfig.request.interceptors.push({
+          urls: selfUrl,
+          before: function(params) {
+            if (params.requestOptions.query) {
+                switch(intl.getLocale())
+                {
+                    case "en":
+                        params.requestOptions.query.culture="en";
+                        params.requestOptions.query.region="US";
+                        break;
+                    case "ja":
+                        params.requestOptions.query.culture="ja";
+                        params.requestOptions.query.region="JP";
+                        break;
+                    case "de":
+                        params.requestOptions.query.culture="de";
+                        params.requestOptions.query.region="DE";
+                        break;
+                    case "fr":
+                        params.requestOptions.query.culture="fr";
+                        params.requestOptions.query.region="FR";
+                        break;
+                }
+            }
+          }
+        });
+        
+        /************************************************************
+        // 
+        // 元のサンプル: Use Portal Basemaps
+        //   https://developers.arcgis.com/javascript/latest/sample-code/basemaps-portal/index.html
+        // 
+        ************************************************************/
+        // esriConfig に Portal の URL を定義した場合、basemapGallery widget は
+        // portal の情報をもとにどの basemaps を使うかをきめる （public にしていない場合、通常はログイン後）
+        //esriConfig.portalUrl = "https://jsapi.maps.arcgis.com";
+        // 
+        // 追記：
+        // 上記で portalUrl を設定してログインしな状態の場合、または　esriConfig.portalUrl を未定義の場合
+        // 　　esriConfig.portalUrl = "https://www.arcgis.com" をデフォルト値として使う
+        // 　　デフォルトの情報
+        //   　　https://www.arcgis.com/sharing/rest/portals/self?f=json
+        // 　　関連Help:
+        //   　　https://developers.arcgis.com/javascript/latest/api-reference/esri-portal-Portal.html
+        //   　　https://developers.arcgis.com/javascript/latest/api-reference/esri-config.html#portalUrl
+        
+        // portal のインスタンスの初期化とロード
+        var portal = new Portal();
+        //portal.authMode = "immediate"; //　public にしていない場合でポータル内の情報を使う場合、通常はログイン必要
+        
+        portal
+          .load()
+          .then(function() {
+            //console.log(portal);
+            // ベクター　タイル ベースマップを使うかどうかは、useVectorBasemaps の bool 値で判断
+            // UI からだと、自分のPortal にログイン後、次の設定箇所が該当します。
+            //  ・[組織] － [設定] を順に選択し、左ペインの[マップ] を選択
+            //  ・[ベースマップ ギャラリー] の 「サポートされている ArcGIS アプリで Esri のベクター ベースマップを使用します。」 のチャックボックス
+            var basemap = portal.useVectorBasemaps
+              ? portal.defaultVectorBasemap
+              : portal.defaultBasemap;
+            var map = new Map({
+              basemap: basemap
+            });
+            var view = new MapView({
+              container: "viewDiv",
+              map: map,
+              center: [139.715512, 35.678257], // 関東周辺
+              zoom: 8
+            });
+            // esriConfig.portalUrl に設定されている Portal URL をもとに BasemapGallery の設定を行う
+            var basemapGallery = new BasemapGallery({
+              view: view
+            });
+            var bgExpand = new Expand({
+              view: view,
+              content: basemapGallery
+            });
+            view.ui.add(bgExpand, "bottom-left"); 
+            
+            // esriConfig.portalUrl に設定されている Portal URL をもとに、Search widget は locators を利用
+            var search = new Search({ view: view });
+            view.ui.add(search, "top-right");
+            
+            /************************************************************
+            // 
+            // 追加コード3: カーソル下のマップ座標や、スケール、ズームレベルをUIに表示
+            // 
+            // 元のサンプル： Get map coordinetes
+            //   https://developers.arcgis.com/javascript/latest/guide/get-map-coordinates/
+            // 
+            ************************************************************/
+            var coordsWidget = document.createElement("div");
+            coordsWidget.id = "coordsWidget";
+            coordsWidget.className = "esri-widget esri-component";
+            coordsWidget.style.padding = "7px 15px 5px";
+            view.ui.add(coordsWidget, "bottom-right");
+            
+            // lat, lon, zoom and scale の更新するfunction を定義
+            function showCoordinates(pt) {
+              var coords = "Lat/Lon " + pt.latitude.toFixed(3) + " " + pt.longitude.toFixed(3) +
+                  " | Scale 1:" + Math.round(view.scale * 1) / 1 +
+                  " | Zoom " + view.zoom;
+              coordsWidget.innerHTML = coords;
+            }
+            
+            // view の動作がが終了したタイミングで中心座標を表示するためのイベントを追加 （例えば zoom, pan などのイベント）
+            view.watch(["stationary"], function() {
+              showCoordinates(view.center);
+            });
+
+            // クリックやムーブ時のマウスの座標を表示するためにイベントを追加
+            view.on(["pointer-down","pointer-move"], function(evt) {
+              showCoordinates(view.toMap({ x: evt.x, y: evt.y }));
+            });
+            
+          })
+          .catch(function(error) {
+            console.warn(error);
+          });
+      });
+    </script>
+  </head>
+
+  <body>
+    <div id="viewDiv"></div>
+  </body>
+</html>
