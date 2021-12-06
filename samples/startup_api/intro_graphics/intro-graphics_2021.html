@@ -1,0 +1,1035 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="initial-scale=1,maximum-scale=1,user-scalable=no">
+  <title>はじめての Web アプリケーション開発 2021：グラフィック編</title>
+  <!--
+    次のサンプルをアレンジ：
+    https://developers.arcgis.com/javascript/latest/sample-code/sandbox/index.html?sample=intro-graphics
+  -->
+  <!-- ArcGIS API for JavaScript の参照 -->
+  <link rel="stylesheet" href="https://js.arcgis.com/4.21/esri/themes/light/main.css" />
+  <script src="https://js.arcgis.com/4.21/"></script>
+  <!-- スタイル設定 -->
+  <style>
+    html,
+    body,
+    #viewDiv {
+      padding: 0;
+      margin: 0;
+      height: 100%;
+      width: 100%;
+    }
+
+    #layerToggle {
+      top: 20px;
+      right: 20px;
+      position: absolute;
+      z-index: 99;
+      background-color: white;
+      border-radius: 8px;
+      padding: 10px;
+      opacity: 0.75;
+    }
+  </style>
+
+  <script>
+    require([
+        "esri/Map",
+        "esri/views/MapView",
+        "esri/Graphic"
+      ],
+      (
+        Map, 
+        MapView, 
+        Graphic
+      ) => {
+
+      const map = new Map({
+        basemap: "hybrid"
+      });
+
+      const view = new MapView({
+        center: [135, 36],
+        container: "viewDiv",
+        map: map,
+        zoom: 5,
+        constraints: { // 山地山脈はアバウトなため拡大と縮小できるスケールを制限
+          minZoom: 4,
+          maxZoom: 7
+        }
+      });
+
+      /*************************
+       * ポイント グラフィックを作成
+       *************************/
+
+      // 最初のポイント ジオメトリを作成
+      const point = {
+        type: "point", // ポイントに自動的に型変換 
+        longitude: 142.85416700000007,
+        latitude: 43.66361100000006
+      };
+
+      // ポイント描画のためのシンボル作成
+      const markerSymbol = {
+        type: "simple-marker", // SimpleMarkerSymbol に自動的に型変換
+        style:"diamond",
+        color: [255, 51, 51],
+        outline: { // SimpleLineSymbol に自動的に型変換
+          color: [255, 255, 255],
+          width: 1
+        }
+      };
+
+      // graphic を作成し geometry と symbol を適用
+      const pointGraphic = new Graphic({
+        geometry: point,
+        symbol: markerSymbol,
+        attributes: { 
+　　　　　 　　　　"活火山名": "大雪山",  
+          "標高": 2291, 
+          "備考": ""
+        },
+        popupTemplate: { // PopupTemplate に自動的に型変換
+          title: "{活火山名}",
+          content: [{
+		    type:"text",
+			text: "<p>活火山名 : {活火山名}　{備考}</p><p>標高 : {標高}m</p>"
+          }]
+        }
+      });
+      
+      /*************************
+       * 追加のポイント グラフィックを作成
+       *************************/
+
+      // 2つ目以降のポイント ジオメトリを作成
+      const point2 = {
+        type: "point", 
+        longitude: 140.83916700000009,
+        latitude: 42.543889000000036
+      };
+
+      const point3 = {
+        type: "point", 
+        longitude: 140.24444400000004,
+        latitude: 37.735278000000051
+      };
+
+      const point4 = {
+        type: "point", 
+        longitude: 138.52777800000001,
+        latitude: 36.643889000000058
+      };
+
+      const point5 = {
+        type: "point", 
+        longitude: 138.523056,
+        latitude: 36.406388999999997
+      };
+
+      const point6 = {
+        type: "point", 
+        longitude: 137.480278,
+        latitude: 35.892778
+      };
+
+      const point7 = {
+        type: "point", 
+        longitude: 138.72750000000008,
+        latitude: 35.360833000000071
+      };
+
+      const point8 = {
+        type: "point", 
+        longitude: 139.52611100000001,
+        latitude: 34.093611000000067
+      };
+
+      const point9 = {
+        type: "point", 
+        longitude: 131.10388900000009,
+        latitude: 32.884444000000087
+      };
+
+      const point10 = {
+        type: "point", 
+        longitude: 130.29222200000004,
+        latitude: 32.760000000000048
+      };
+
+      const point11 = {
+        type: "point", 
+        longitude: 130.65666700000008,
+        latitude: 31.592500000000086
+      };
+
+      // 2つ目以降でシンボルは一つ目と同じものを使うので省略
+      
+      // 2つ目以降の grahics を作成し geometry と symbol を適用
+      const pointGraphic2 = new Graphic({
+        geometry: point2,
+        symbol: markerSymbol,
+        attributes: { 
+　　　　　 "活火山名": "有珠山",  
+          "標高": 733, 
+          "備考": "大有珠"
+        },
+        popupTemplate: {
+          title: "{活火山名}",
+          content: [{
+		    type:"text",
+			text: "<p>活火山名 : {活火山名}　{備考}</p><p>標高 : {標高}m</p>"
+          }]
+        }
+      });
+
+      const pointGraphic3 = new Graphic({
+        geometry: point3,
+        symbol: markerSymbol,
+        attributes: { 
+　　　　　 "活火山名": "吾妻山",  
+          "標高": 1949,
+          "備考": ""
+        },
+        popupTemplate: {
+          title: "{活火山名}",
+          content: [{
+		    type:"text",
+			text: "<p>活火山名 : {活火山名}　{備考}</p><p>標高 : {標高}m</p>"
+          }]
+        }
+      });
+
+      const pointGraphic4 = new Graphic({
+        geometry: point4,
+        symbol: markerSymbol,
+        attributes: { 
+　　　　　 "活火山名": "草津白根山",  
+          "標高": 2160, 
+          "備考": "白根山"
+        },
+        popupTemplate: {
+          title: "{活火山名}",
+          content: [{
+		    type:"text",
+			text: "<p>活火山名 : {活火山名}　{備考}</p><p>標高 : {標高}m</p>"
+          }]
+        }
+      });
+
+      const pointGraphic5 = new Graphic({
+        geometry: point5,
+        symbol: markerSymbol,
+        attributes: { 
+　　　　　 "活火山名": "浅間山",  
+          "標高": 2568, 
+          "備考": ""
+        },
+        popupTemplate: {
+          title: "{活火山名}",
+          content: [{
+		    type:"text",
+			text: "<p>活火山名 : {活火山名}　{備考}</p><p>標高 : {標高}m</p>"
+          }]
+        }
+      });
+
+      const pointGraphic6 = new Graphic({
+        geometry: point6,
+        symbol: markerSymbol,
+        attributes: { 
+　　　　　 "活火山名": "御嶽山",  
+          "標高": 3067, 
+          "備考": ""
+        },
+        popupTemplate: {
+          title: "{活火山名}",
+          content: [{
+		    type:"text",
+			text: "<p>活火山名 : {活火山名}　{備考}</p><p>標高 : {標高}m</p>"
+          }]
+        }
+      });
+
+      const pointGraphic7 = new Graphic({
+        geometry: point7,
+        symbol: markerSymbol,
+        attributes: { 
+　　　　　 "活火山名": "富士山",  
+          "標高": 3776, 
+          "備考": ""
+        },
+        popupTemplate: {
+          title: "{活火山名}",
+          content: [{
+		    type:"text",
+			text: "<p>活火山名 : {活火山名}　{備考}</p><p>標高 : {標高}m</p>"
+          }]
+        }
+      });
+
+      const pointGraphic8 = new Graphic({
+        geometry: point8,
+        symbol: markerSymbol,
+        attributes: { 
+　　　　　 "活火山名": "三宅島",  
+          "標高": 775, 
+          "備考": ""
+        },
+        popupTemplate: {
+          title: "{活火山名}",
+          content: [{
+		    type:"text",
+			text: "<p>活火山名 : {活火山名}　{備考}</p><p>標高 : {標高}m</p>"
+          }]
+        }
+      });
+
+      const pointGraphic9 = new Graphic({
+        geometry: point9,
+        symbol: markerSymbol,
+        attributes: { 
+　　　　　 "活火山名": "阿蘇山",  
+          "標高": 1592, 
+          "備考": "高岳"
+        },
+        popupTemplate: {
+          title: "{活火山名}",
+          content: [{
+		    type:"text",
+			text: "<p>活火山名 : {活火山名}　{備考}</p><p>標高 : {標高}m</p>"
+          }]
+        }
+      });
+
+      const pointGraphic10 = new Graphic({
+        geometry: point10,
+        symbol: markerSymbol,
+        attributes: { 
+　　　　　 "活火山名": "雲仙岳",  
+          "標高": 1359, 
+          "備考": "普賢岳"
+        },
+        popupTemplate: {
+          title: "{活火山名}",
+          content: [{
+		    type:"text",
+			text: "<p>活火山名 : {活火山名}　{備考}</p><p>標高 : {標高}m</p>"
+          }]
+        }
+      });
+
+      const pointGraphic11 = new Graphic({
+        geometry: point11,
+        symbol: markerSymbol,
+        attributes: { 
+　　　　　 "活火山名": "桜島",  
+          "標高": 1117, 
+          "備考": "御岳"
+        },
+        popupTemplate: {
+          title: "{活火山名}",
+          content: [{
+		    type:"text",
+			text: "<p>活火山名 : {活火山名}　{備考}</p><p>標高 : {標高}m</p>"
+          }]
+        }
+      });
+      
+
+      /****************************
+       * ポリラインのグラフィックを作成
+       ****************************/
+
+      // 緯度・経度座標でライン ジオメトリを作成
+      const polyline = {
+        type: "polyline", 
+        paths : [
+          [
+            142.70820654700003,
+            43.025899449000065
+          ],
+          [
+            142.71502962200009,
+            42.951703725000073
+          ],
+          [
+            142.71988747600005,
+            42.726739020000082
+          ],
+          [
+            142.9701758330001,
+            42.401820893000036
+          ],
+          [
+            143.21793175400001,
+            42.073811263000039
+          ]
+        ]
+      };
+
+      // viewで描画するシンプル ライン シンボルを定義
+      const lineSymbol = {
+        type: "simple-line",  // SimpleLineSymbol に自動的に型変換
+        color: [226, 119, 40],  // RGB カラーの値を配列として定義
+        width: 4
+      };
+
+      // ライン オブジェクトの属性を定義
+      const lineAtt = {
+        名称: "日高山脈",
+        備考: "北海道の背骨"
+      };
+
+      /*******************************************
+       * グラフィック を作成し、ジオメトリ,
+       * シンボル, 属性を追加。 
+       * クリックしたときにグラフィックの属性を表示するため
+       * ポップアップ テンプレートも追加可能。
+       ******************************************/
+      const polylineGraphic = new Graphic({
+        geometry: polyline,
+        symbol: lineSymbol,
+        attributes: lineAtt,
+        popupTemplate: { // PopupTemplate に自動的に型変換
+          title: "{名称}",
+          content: [{
+            type: "fields",
+            fieldInfos: [{
+              fieldName: "名称"
+            },
+            {
+              fieldName: "備考"
+            }]
+          }]
+        }
+      });
+
+      /****************************
+       * 追加ポリラインのグラフィックを作成
+       ****************************/
+
+      // 2つ目以降のライン グラフィックのジオメトリを作成
+      const polyline2 = {
+        type: "polyline",
+        paths : [
+          [
+            [
+              140.87555281500011,
+              40.192956409000089
+            ],
+            [
+              140.79395236000005,
+              39.636571588000038
+            ],
+            [
+              140.65922790400009,
+              39.389399947000072
+            ],
+            [
+              140.57112761400003,
+              38.554285109000034
+            ],
+            [
+              140.30090460700001,
+              37.995377907000034
+            ],
+            [
+              140.14012304200003,
+              37.74655185000006
+            ]
+          ]
+        ]
+      };      
+
+      const polyline3 = {
+        type: "polyline",
+        paths : [
+          [
+            [
+              138.63163457600001,
+              36.211548077000089
+            ],
+            [
+              138.64204078500006,
+              36.053875676000075
+            ],
+            [
+              138.73652028800007,
+              35.914642724000089
+            ],
+            [
+              138.8540799540001,
+              35.852605009000058
+            ],
+            [
+              139.19234245200005,
+              35.644464496000069
+            ]
+          ]
+        ]
+      }; 
+
+      const polyline4 = {
+        type: "polyline",
+        paths : [
+          [
+            [
+              137.76265209000007,
+              36.772881271000074
+            ],
+            [
+              137.74687152400008,
+              36.624543955000036
+            ],
+            [
+              137.687609694,
+              36.557043776000057
+            ],
+            [
+              137.64967449400001,
+              36.477972618000081
+            ],
+            [
+              137.64755284900002,
+              36.289146215000073
+            ],
+            [
+              137.58793680500003,
+              36.223434944000076
+            ],
+            [
+              137.55473088100007,
+              36.106684746000042
+            ]
+          ]
+        ]
+      }; 
+
+      const polyline5 = {
+        type: "polyline",
+        paths : [
+          [
+            [
+              137.80967453200003,
+              35.847965416000079
+            ],
+            [
+              137.80682984400005,
+              35.789212489000079
+            ],
+            [
+              137.81727850700008,
+              35.716959779000035
+            ],
+            [
+              137.79490109300002,
+              35.644613382000045
+            ],
+            [
+              137.73689362200003,
+              35.613328454000055
+            ]
+          ]
+        ]
+      }; 
+
+      const polyline6 = {
+        type: "polyline",
+        paths : [
+          [
+            [
+              138.20972186200004,
+              35.778556327000047
+            ],
+            [
+              138.23939620200008,
+              35.748701008000069
+            ],
+            [
+              138.22570110700008,
+              35.645226962000038
+            ],
+            [
+              138.18248659400001,
+              35.574439550000079
+            ],
+            [
+              138.15409558900001,
+              35.541796769000086
+            ],
+            [
+              138.156217234,
+              35.459583026000075
+            ],
+            [
+              138.14083530800008,
+              35.392751209000039
+            ],
+            [
+              138.08408130500004,
+              35.338118851000047
+            ]
+          ]
+        ]
+      }; 
+
+      const polyline7 = {
+        type: "polyline",
+        paths : [
+          [
+            [
+              136.20960796200006,
+              34.445237819000056
+            ],
+            [
+              136.08443090800006,
+              34.382533265000063
+            ],
+            [
+              135.91373793800005,
+              34.282799375000081
+            ],
+            [
+              135.76373100800004,
+              34.192463710000084
+            ],
+            [
+              135.65411717500001,
+              34.145985205000045
+            ],
+            [
+              135.56356706400004,
+              34.059827748000089
+            ]
+          ]
+        ]
+      }; 
+
+      const polyline8 = {
+        type: "polyline",
+        paths : [
+          [
+            [
+              134.51426029700008,
+              35.275792421000062
+            ],
+            [
+              134.31628844400007,
+              35.231375659000037
+            ],
+            [
+              134.04257966600005,
+              35.149242721000064
+            ],
+            [
+              133.84196818700002,
+              35.101323380000053
+            ],
+            [
+              133.30907333499999,
+              35.033867599000075
+            ],
+            [
+              132.53515090500002,
+              34.792690336000078
+            ],
+            [
+              132.28569459200003,
+              34.747207662000051
+            ],
+            [
+              132.0625343480001,
+              34.530066713000053
+            ]
+          ]
+        ]
+      }; 
+
+      const polyline9 = {
+        type: "polyline",
+        paths : [
+          [
+            [
+              134.479995938,
+              33.978822969000078
+            ],
+            [
+              134.23506922200011,
+              33.89115697200009
+            ],
+            [
+              134.00440663100005,
+              33.844049823000034
+            ],
+            [
+              133.58885660400006,
+              33.818384549000086
+            ],
+            [
+              133.36159284500002,
+              33.742655543000069
+            ],
+            [
+              133.10284077900008,
+              33.65462580500008
+            ],
+            [
+              133.04502056800004,
+              33.594478485000081
+            ],
+            [
+              132.91623149400004,
+              33.565240477000089
+            ]
+          ]
+        ]
+      }; 
+
+      const polyline10 = {
+        type: "polyline",
+        paths : [
+          [
+            [
+              131.5345300890001,
+              32.758961016000057
+            ],
+            [
+              131.29168461500001,
+              32.632259030000057
+            ],
+            [
+              131.10746252600006,
+              32.576096913000072
+            ],
+            [
+              130.95855766300008,
+              32.486254222000071
+            ],
+            [
+              130.73452075200009,
+              32.339869831000044
+            ],
+            [
+              130.60213342000009,
+              32.188802078000037
+            ]
+          ]
+        ]
+      }; 
+
+      // 2つ目以降でシンボルは一つ目と同じものを使うので省略
+
+      // 属性
+      const lineAtt2 = {
+        名称: "奥羽山脈",
+        備考: "東北地方の背骨"
+      };
+
+      const lineAtt3 = {
+        名称: "関東山地",
+        備考: ""
+      };
+
+      const lineAtt4 = {
+        名称: "飛騨山脈",
+        備考: "北アルプス"
+      };
+
+      const lineAtt5 = {
+        名称: "木曽山脈",
+        備考: "中央アルプス"
+      };
+
+      const lineAtt6 = {
+        名称: "赤石山脈",
+        備考: "南アルプス"
+      };
+
+      const lineAtt7 = {
+        名称: "紀伊山地",
+        備考: ""
+      };
+
+      const lineAtt8 = {
+        名称: "中国山地",
+        備考: ""
+      };
+
+      const lineAtt9 = {
+        名称: "四国山地",
+        備考: ""
+      };
+
+      const lineAtt10 = {
+        名称: "九州山地",
+        備考: ""
+      };
+
+      // ポリライン グラフィック
+      const polylineGraphic2 = new Graphic({
+        geometry: polyline2,
+        symbol: lineSymbol,
+        attributes: lineAtt2,
+        popupTemplate: {
+          title: "{名称}",
+          content: [{
+            type: "fields",
+            fieldInfos: [{
+              fieldName: "名称"
+            },
+            {
+              fieldName: "備考"
+            }]
+          }]
+        }
+      });
+
+      const polylineGraphic3 = new Graphic({
+        geometry: polyline3,
+        symbol: lineSymbol,
+        attributes: lineAtt3,
+        popupTemplate: {
+          title: "{名称}",
+          content: [{
+            type: "fields",
+            fieldInfos: [{
+              fieldName: "名称"
+            },
+            {
+              fieldName: "備考"
+            }]
+          }]
+        }
+      });
+
+      const polylineGraphic4 = new Graphic({
+        geometry: polyline4,
+        symbol: lineSymbol,
+        attributes: lineAtt4,
+        popupTemplate: {
+          title: "{名称}",
+          content: [{
+            type: "fields",
+            fieldInfos: [{
+              fieldName: "名称"
+            },
+            {
+              fieldName: "備考"
+            }]
+          }]
+        }
+      });
+
+      const polylineGraphic5 = new Graphic({
+        geometry: polyline5,
+        symbol: lineSymbol,
+        attributes: lineAtt5,
+        popupTemplate: {
+          title: "{名称}",
+          content: [{
+            type: "fields",
+            fieldInfos: [{
+              fieldName: "名称"
+            },
+            {
+              fieldName: "備考"
+            }]
+          }]
+        }
+      });
+
+      const polylineGraphic6 = new Graphic({
+        geometry: polyline6,
+        symbol: lineSymbol,
+        attributes: lineAtt6,
+        popupTemplate: {
+          title: "{名称}",
+          content: [{
+            type: "fields",
+            fieldInfos: [{
+              fieldName: "名称"
+            },
+            {
+              fieldName: "備考"
+            }]
+          }]
+        }
+      });
+
+      const polylineGraphic7 = new Graphic({
+        geometry: polyline7,
+        symbol: lineSymbol,
+        attributes: lineAtt7,
+        popupTemplate: {
+          title: "{名称}",
+          content: [{
+            type: "fields",
+            fieldInfos: [{
+              fieldName: "名称"
+            },
+            {
+              fieldName: "備考"
+            }]
+          }]
+        }
+      });
+
+      const polylineGraphic8 = new Graphic({
+        geometry: polyline8,
+        symbol: lineSymbol,
+        attributes: lineAtt8,
+        popupTemplate: {
+          title: "{名称}",
+          content: [{
+            type: "fields",
+            fieldInfos: [{
+              fieldName: "名称"
+            },
+            {
+              fieldName: "備考"
+            }]
+          }]
+        }
+      });
+
+      const polylineGraphic9 = new Graphic({
+        geometry: polyline9,
+        symbol: lineSymbol,
+        attributes: lineAtt9,
+        popupTemplate: {
+          title: "{名称}",
+          content: [{
+            type: "fields",
+            fieldInfos: [{
+              fieldName: "名称"
+            },
+            {
+              fieldName: "備考"
+            }]
+          }]
+        }
+      });
+
+      const polylineGraphic10 = new Graphic({
+        geometry: polyline10,
+        symbol: lineSymbol,
+        attributes: lineAtt10,
+        popupTemplate: {
+          title: "{名称}",
+          content: [{
+            type: "fields",
+            fieldInfos: [{
+              fieldName: "名称"
+            },
+            {
+              fieldName: "備考"
+            }]
+          }]
+        }
+      });
+
+      /***************************
+       * ポリゴンのグラフィックを作成
+       ***************************/
+      // polygon ジオメトリを作成
+      const polygon = {
+        type: "polygon", // Polygon に自動的に型変換
+        rings: [
+          [
+            137.72766989199999,
+            36.883905691000052
+          ],
+          [
+            137.87774222100006,
+            36.796766919000049
+          ],
+          [
+            137.9328941870001,
+            36.164640550000058
+          ],
+          [
+            138.33144859600009,
+            35.830179230000056
+          ],
+          [
+            138.30721179400007,
+            35.488956113000086
+          ],
+          [
+            138.23750072000007,
+            35.252017970000054
+          ],
+          [
+            137.930993693,
+            35.276679455000078
+          ],
+          [
+            137.669577377,
+            35.484844299000088
+          ],
+          [
+            137.51950504800004,
+            35.935061287000053
+          ],
+          [
+            137.4759356620001,
+            36.486940175000086
+          ],
+          [
+            137.5146640050001,
+            36.777402748000043
+          ],
+          [
+            137.72766989199999,
+            36.883905691000052
+          ]
+        ]
+      };
+
+
+      const fillSymbol = {
+        type: "simple-fill", // SimpleFillSymbol　に自動的に型変換
+        color: [255, 255, 255],
+        style: "diagonal-cross",
+        outline: { // SimpleLineSymbol に自動的に型変換
+          color: [255, 255, 255],
+          width: 1
+        }
+      };
+
+
+	  // graphic を作成し geometry と symbol を適用
+      const polygonGraphic = new Graphic({
+        geometry: polygon,
+        symbol: fillSymbol,
+        popupTemplate: {
+          title: "日本アルプス"
+        }
+      });
+
+      // グラフィック をview のグラフィック レイヤー にaddMany() で追加
+      view.graphics.addMany([pointGraphic, polylineGraphic, polygonGraphic]);
+
+      // 追加のポイント グラフィック をaddMany() で追加
+      view.graphics.addMany([pointGraphic2, pointGraphic3, pointGraphic4, pointGraphic5,
+                             pointGraphic6, pointGraphic7, pointGraphic8, pointGraphic9, pointGraphic10, pointGraphic11]); 
+      
+      // 追加のライン グラフィック をaddMany() で追加
+      view.graphics.addMany([polylineGraphic2, polylineGraphic3, polylineGraphic4, polylineGraphic5,
+                             polylineGraphic6, polylineGraphic7, polylineGraphic8, polylineGraphic9, polylineGraphic10]); 
+
+
+    });
+
+  </script>
+</head>
+
+<body>
+  <div id="viewDiv"></div> 
+</body>
+
+</html>

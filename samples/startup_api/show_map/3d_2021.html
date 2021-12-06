@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="initial-scale=1,maximum-scale=1,user-scalable=no">
+  <title>はじめての Web アプリケーション開発 2021：地図表示編</title>
+
+  <style>
+    html,
+    body,
+    #viewDiv {
+      padding: 0;
+      margin: 0;
+      height: 100%;
+      width: 100%;
+    }
+  </style>
+
+  <!-- ArcGIS API for JavaScript の参照 -->
+  <link rel="stylesheet" href="https://js.arcgis.com/4.21/esri/themes/light/main.css" />
+  <script src="https://js.arcgis.com/4.21/"></script>
+
+  <script>
+    require([
+      // モジュールの読み込み
+      "esri/Map",
+      "esri/views/SceneView"
+    ], (Map, SceneView)  => {
+
+      // Map の作成
+      var map = new Map({
+        basemap: "streets" // ベースマップを定義
+      });
+
+      // View の作成
+      var view = new SceneView({
+        container: "viewDiv", // View を表示する DOM ノードを参照
+        map: map  // map オブジェクトを参照
+      });
+
+    });
+  </script>
+</head>
+
+<body>
+  <!-- View を表示する要素 -->
+  <div id="viewDiv"></div>
+</body>
+</html>
