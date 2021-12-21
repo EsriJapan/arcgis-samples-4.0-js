@@ -1,0 +1,513 @@
+<html>
+    <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="initial-scale=1, maximum-scale=1, user-scalable=no">
+    <title>はじめての Web マッピングアプリケーション開発 2021：ポップアップ設定編その２</title>
+    <!--Calcite components CDN-->
+    <script type="module" src="https://js.arcgis.com/calcite-components/1.0.0-beta.62/calcite.esm.js"></script>
+    <link rel="stylesheet" type="text/css" href="https://js.arcgis.com/calcite-components/1.0.0-beta.62/calcite.css"/>
+    <!-- Load the Chart.js library -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.6.0/chart.min.js"></script>
+    <!--ArcGIS JS API CDN-->
+    <link rel="stylesheet" href="https://js.arcgis.com/4.22/esri/themes/light/main.css" />
+    <script src="https://js.arcgis.com/4.22/"></script>
+    <style>
+      html,
+      body,
+      #viewDiv {
+        padding: 0;
+        margin: 0;
+        height: 100%;
+        width: 100%;
+      }
+
+       .panel-side {
+        padding: 0px;
+        width: 390px;
+        height: 38%;
+        position: absolute;
+        top: 10px;
+        left: 60px;
+        z-index: 60;
+        opacity: 0.9;
+      }
+    </style>
+    
+    <script>
+    require([
+        "esri/Map",
+        "esri/Basemap",
+        "esri/views/MapView",
+        "esri/layers/WebTileLayer",
+        "esri/layers/FeatureLayer"
+    ],
+    (Map, Basemap, MapView, WebTileLayer,  FeatureLayer) => {
+        
+        /**********************************************************************************
+        *
+        * シンボルを作成
+        *
+        **********************************************************************************/
+        //地価公示レイヤーのシンボルを定義
+        const chikakojiLyrSymbol = {
+            type: "simple-marker",
+            size: 8,
+            color: "#0000ff",
+            outline: {
+                color: "white",
+                width: 1
+            }
+        };
+        
+        /**********************************************************************************
+        *
+        * レンダラーを作成
+        *
+        **********************************************************************************/
+        //レンダラーを定義
+        const renderer = {
+            type: "simple",
+            symbol: chikakojiLyrSymbol,
+        };
+        
+        /**********************************************************************************
+        * 1つのWebTileLayer と 2つのFeatureLayer のインスタンスを作成
+        * 1) WebTileLayer:地理院タイル（淡色地図）
+        *    地理院タイル一覧ページ：https://maps.gsi.go.jp/development/ichiran.html
+        * 2) FeatureLayer:公示地価 Living Atlas
+        * 3) FeatureLayer:全国市区町村界データ 2021 Living Atlas
+        **********************************************************************************/
+        // WebTileLayer:地理院タイル（淡色地図）
+        // 地理院タイルの形式から WebTileLayer への読み換え
+        // 【読み換え前】https://cyberjapandata.gsi.go.jp/xyz/pale/{z}/{x}/{y}.png
+        // 【読み換え後】https://cyberjapandata.gsi.go.jp/xyz/pale/{level}/{col}/{row}.png
+        const gsipaleLyr = new WebTileLayer({
+            urlTemplate: "https://cyberjapandata.gsi.go.jp/xyz/pale/{level}/{col}/{row}.png",
+            id: "gsipale",
+            opacity: 0.9,
+            copyright: "地理院タイル（淡色地図）",
+            visible: false
+        });
+        
+        // FeatureLayer：公示地価(国土数値情報 調査時点:令和3年1月1日)： Living Atlas
+        const chikakojiLyr = new FeatureLayer({
+            url: "https://services.arcgis.com/wlVTGRSYTzAbjjiC/arcgis/rest/services/LandPrice/FeatureServer/0",
+            id: "chikakoji",
+            //上で作成したレンダラーを適用する
+            renderer: renderer,
+            // 2021にデータを変更したことに伴いレイヤーが愛知県のみとなるようフィルタ定義を追加
+            definitionExpression: "L01_021 LIKE '23%'"
+        });
+        
+        // FeatureLayer：全国市区町村界データ 2021： Living Atlas
+        const cityareaLyr = new FeatureLayer({
+            url: "https://services.arcgis.com/wlVTGRSYTzAbjjiC/arcgis/rest/services/municipalityboundaries2021/FeatureServer",
+            id: "cityarea",
+            opacity: 0.5,
+            minScale: 5000000,//1500000,　パフォーマンスが向上しているのでスケール変更
+            maxScale: 50000,
+            visible: false,
+            // 上記と同様にこちらも愛知県のみになるようフィルタ定義を追加
+            definitionExpression: "JCODE LIKE '23%'"
+        });
+        
+        /**********************************************************************************
+        *
+        * Map の作成と レイヤーの追加
+        * ※2021に変更:
+        *     ラスターベースマップが更新されなくなるので、ベクターベースマップ（日本語）に切り替え
+        *     単純に well known id "streets-vector" でbasemap を指定すると英語地図になってしまうのでbasemapのid を指定して追加
+        *         道路地図（vector）のidは "accf3eff22254ed69e23afeb094a4881"
+        *         以下でクエリした一覧に日本語ベクタータイルが含まれる：
+        *         https://www.arcgis.com/home/user.html?user=Esri_cy_JP
+        **********************************************************************************/
+        // Map を作成
+        // コンストラクター内でレイヤーを追加
+        const map = new Map({
+            basemap: new Basemap(
+                {portalItem: {id: "accf3eff22254ed69e23afeb094a4881"}}
+            ), //"streets-vector", 
+            layers:[chikakojiLyr]
+        });
+        
+        // もしくは map.add() を使って map にレイヤーを追加することも可能
+        // レイヤー描画の順番が変更された模様
+        map.add(cityareaLyr, 0);
+        map.add(gsipaleLyr, 0);
+        
+        // MapView を作成し map インスタンスを追加
+        const view = new MapView({
+            container: "viewDiv",
+            map: map
+        });
+        
+        /**********************************************************************************
+        * view の ”layerview-create” イベントで
+        * コンソール内でそれらのプロパティを確認できるよう print 文で出力
+        * 
+        **********************************************************************************/
+        view.on("layerview-create", (event) => {
+          if (event.layer.id === "gsipale") {
+            // gsipaleLyr view のプロパティを確認できる
+            console.log("地理院タイル（淡色地図）の LayerView が作成されました!", event.layerView);
+          }
+          if (event.layer.id === "chikakoji"){
+            // chikakojiLyr view のプロパティを確認できる
+            console.log("公示地価 の LayerView が作成されました!", event.layerView);
+          }
+          if (event.layer.id === "cityarea"){
+            // cityLyr view のプロパティを確認できる
+            console.log("全国市区町村界データ の LayerView が作成されました!", event.layerView);
+          }
+        });
+        
+        /**********************************************************************************
+        * ロードされた時 もしくは すべてのプロパティにアクセスできるようになったとき
+        * layer.when('callback') で指定されるコールバック関数が実行される
+        *
+        * 地価公示レイヤーがロードされると、view が初期表示範囲として
+        * レイヤーの表示範囲にズームしながら移動していく処理
+        * ※2021に変更:
+        *     地価公示を愛知県だけのものから全国のレイヤーに変更したが、アプリでは愛知県のみに絞り込むため、
+        *     definitionExpression　を定義した。そのため、view.goTo の書き方も以下のHelpにあるように変更した。
+        *     https://developers.arcgis.com/javascript/latest/sample-code/featurelayer-queryextent/
+        **********************************************************************************/
+        /*
+        view.when(function() {
+            chikakojiLyr.when(function() {
+                return chikakojiLyr.queryExtent();
+            }).then(function(response){
+                view.goTo(response.extent, {"duration":2000});
+            });
+        });
+        */
+        // 上記をアロー関数で書き換えしたもの
+        view.when(() => {
+            chikakojiLyr.when(() => {
+                return chikakojiLyr.queryExtent();
+            }).then((response) => {
+                // goTo のアニメーションの動きを調整するため、GoToOptions2D のduration にデフォルトの5倍の値を設定
+                // https://developers.arcgis.com/javascript/latest/api-reference/esri-views-MapView.html#methods-summary
+                view.goTo(response.extent, {"duration":1000}); 
+            });
+        });
+        
+        /**********************************************************************************
+        * レイヤーの visible プロパティで view 内でのレイヤーの表示/非表示を切り替えを行う
+        * なお、レイヤーが非表示状態であっても、そのレイヤーのプロパティにアクセスしたり、
+        * そのレイヤーに対して解析を実行することは可能
+        * ※2021に変更:
+        *     dojo/on を使っていたものから書き換え、ついでにアロー関数で書き換え、レイヤーのvisible 状態を反転に書き換え
+         **********************************************************************************/
+        const gsipaleToggle = document.getElementById("gsipaleLyr");
+        const chikakojiToggle = document.getElementById("chikakojiLyr");
+        const cityareaToggle = document.getElementById("cityareaLyr");
+        gsipaleToggle.addEventListener("calciteCheckboxChange", () => {
+            gsipaleLyr.visible = !(gsipaleLyr.visible); //gsipaleToggle.checked;
+        });
+        chikakojiToggle.addEventListener("calciteCheckboxChange", () => {
+            chikakojiLyr.visible = !(chikakojiLyr.visible); //chikakojiToggle.checked;
+        });
+        cityareaToggle.addEventListener("calciteCheckboxChange", () => {
+            cityareaLyr.visible = !(cityareaLyr.visible); //cityareaToggle.checked;
+        });
+        
+        /**********************************************************************************
+        *
+        * 操作パネル制御
+        * ※2021に追加:
+        *     calcite-panel を使った次のサンプルを参考にアレンジ：
+        *     https://developers.arcgis.com/javascript/latest/sample-code/sandbox/?sample=featurelayer-query-pagination
+        **********************************************************************************/
+        const resultPanel = document.getElementById("controlsDiv");
+        const toggleButton = document.getElementById("toggle-button");
+        view.ui.add(toggleButton, "top-left");
+        
+        toggleButton.addEventListener("click", () => {
+            if (resultPanel.clientWidth == 390) {
+                resultPanel.style.width = "0px";
+                toggleButton.icon = "chevrons-right";
+                toggleButton.title = "パネルを展開";
+            } else {
+                resultPanel.style.width = "390px";
+                toggleButton.icon = "chevrons-left";
+                toggleButton.title = "パネルを畳む";
+            }
+        });
+        
+        /**********************************************************************************
+        *
+        * ポップアップの設定
+        * ※2021に変更:
+        *     設定方法１は以前の記事で解説しているもの
+        *     設定方法２は、PopupTemplate のcontent にfunction を使った次のサンプルを参考にアレンジ:
+        *     (function で平成29年～令和3年の価格変動率と5年間の平均変動率を計算)
+        *     https://developers.arcgis.com/javascript/latest/sample-code/sandbox/?sample=popuptemplate-function
+        **********************************************************************************/
+        // ポップアップ設定の方法ー１
+        // 市区町村用のPopupTemplate の作成
+        const cityPopupTemplate = {
+            title: "全国市区町村界",
+            content: [
+                {
+                    type: "text",
+                    text: "自治体コード: {JCODE}" + "</br>" + "都道府県名: {KEN}" + "</br>" +"市区町村名: {SIKUCHOSON}"
+                }
+            ]
+        };
+        cityareaLyr.popupTemplate = cityPopupTemplate;
+        
+        // ポップアップ設定の方法ー２
+        // 変動率の計算
+        function calChange(year_val, last_year_val){
+            return (year_val - last_year_val)/last_year_val;
+        }
+        
+        // 平均変動率を幾何平均で計算(以下を参考にしてオーバフローしないようにlogを使って計算)
+        // https://www.geeksforgeeks.org/geometric-mean-two-methods/?ref=gcse
+        // n年間の平均変動率
+        function geometricMean(arr , n){
+            var sum = 0;
+            for (var i = 0; i < n; i++)
+                sum = sum + Math.log(arr[i]);
+                sum = sum / n;
+            return Math.exp(sum);
+        }
+
+        // 公示地価用のPopupTemplate の作成
+        const chikakojiPopupTemplate = {
+            title: "公示地価: {L01_001}", //標準地コード // Popup のタイトルを設定
+            outFields: ["*"],
+            content: landpriceChange,
+            fieldInfos: [
+                {
+                    fieldName: "L01_090",　// H29
+                    format: {
+                        digitSeparator: true, // 数値の3桁区切りを有効にする
+                        places: 0 // 整数で表示する
+                    }
+               },
+                {
+                    fieldName: "L01_091", // H30
+                    format: {
+                        digitSeparator: true,
+                        places: 0
+                    }
+                },
+                {
+                    fieldName: "L01_092", // R1
+                    label: "令和元年価格(円/m2)",
+                    format: {
+                        digitSeparator: true,
+                        places: 0
+                    }
+                },
+                {
+                    fieldName: "L01_093", // R2
+                    format: {
+                        digitSeparator: true,
+                        places: 0
+                    }
+                },
+                {
+                    fieldName: "L01_094", // R3
+                    format: {
+                        digitSeparator: true,
+                        places: 0
+                    }
+                }
+            ]
+        };
+            
+        // 地価公示レイヤーに PopupTemplate を設定する
+        chikakojiLyr.popupTemplate = chikakojiPopupTemplate;
+        
+        // content で指定するfunction の定義
+        function landpriceChange(feature) {
+            const div = document.createElement("div");
+            // 上昇/下降の矢印をSVGで定義
+            const upArrow =
+              '<svg width="16" height="16" ><polygon points="14.14 7.07 7.07 0 0 7.07 4.07 7.07 4.07 16 10.07 16 10.07 7.07 14.14 7.07" style="fill:green"/></svg>';
+            const downArrow =
+              '<svg width="16" height="16"><polygon points="0 8.93 7.07 16 14.14 8.93 10.07 8.93 10.07 0 4.07 0 4.07 8.93 0 8.93" style="fill:red"/></svg>';
+            
+            // 住所
+            const address = feature.graphic.attributes.L01_023;
+            
+            // 5年間の平均変動率の計算
+            const yearH29 = feature.graphic.attributes.L01_090;
+            const yearH30 = feature.graphic.attributes.L01_091;
+            const yearR1 = feature.graphic.attributes.L01_092;
+            const yearR2 = feature.graphic.attributes.L01_093;
+            const yearR3 = feature.graphic.attributes.L01_094;
+            
+            let diff1 = calChange(yearH30, yearH29) + 1;
+            let diff2 = calChange(yearR1, yearH30) + 1;
+            let diff3 = calChange(yearR2, yearR1) + 1;
+            let diff4 = calChange(yearR3, yearR2) + 1;
+            
+            //const arr = [diff1, diff2, diff3, diff4];
+            let arr = [];
+            // NaN か Infinity でない場合計算対象
+            if (isFinite(diff1)) {arr.push(diff1)};
+            if (isFinite(diff2)) {arr.push(diff2)};
+            if (isFinite(diff3)) {arr.push(diff3)};
+            if (isFinite(diff4)) {arr.push(diff4)};
+
+            const n = arr.length;
+            let geoMean = geometricMean(arr, n);
+            
+            // % に変更
+            diff1 = (diff1 - 1) * 100;
+            diff2 = (diff2 - 1) * 100;
+            diff3 = (diff3 - 1) * 100;
+            diff4 = (diff4 - 1) * 100;
+            geoMean = (geoMean - 1) * 100;
+    
+            const arrow = geoMean >= 0 ? upArrow : downArrow;
+            
+
+            div.innerHTML = "住居表示:" + (address ? address : "") + "</br>" + 
+                    "公示価格(円/m2): " + (yearR3 ? yearR3.toLocaleString() : "") + "</br>" + 
+                    "<ul>" + 
+                    "<li>平成29年価格(円/m2): " + (yearH29 ? yearH29.toLocaleString() : "") + "</li>" + 
+                    "<li>平成30年価格(円/m2): " + (yearH30 ? yearH30.toLocaleString() : "") + " 変動率: " + (isFinite(diff1) ? diff1.toFixed(2) : "---") + "%</li>" + 
+                    "<li>令和元年価格(円/m2): " + (yearR1 ? yearR1.toLocaleString() : "")  + " 変動率: " + (isFinite(diff2) ? diff2.toFixed(2) : "---") + "%</li>" + 
+                    "<li>令和02年価格(円/m2): " + (yearR2 ? yearR2.toLocaleString() : "")  + " 変動率: " + (isFinite(diff3) ? diff3.toFixed(2) : "---") + "%</li>" + 
+                    "<li>令和03年価格(円/m2): " + (yearR3 ? yearR3.toLocaleString() : "") + " 変動率: " + (isFinite(diff4) ? diff4.toFixed(2) : "---") + "%</li>" + 
+                    "<li>" + (n + 1) + "年間の平均変動率: " + arrow + 
+                    "<span style='color: " +
+                    (geoMean < 0 ? "red" : "green") + ";'>" + 
+                    "<b>" + geoMean.toFixed(2) + "</b>" +
+                    "</span></li>" + 
+                    "</ul>";
+
+                    
+            // チャート作成して追加
+            const chartCanvas = createHorizontalBarChart(diff1, diff2, diff3, diff4, geoMean);
+            div.appendChild(chartCanvas);
+
+            return div;
+        };
+
+        
+        // Chart.js 3.x で横棒グラフを作成
+        function createHorizontalBarChart(diff1, diff2, diff3, diff4, geoMean){
+            
+            const canvas = document.createElement("canvas");
+
+            const data = {
+                        labels: [
+                            'H29～H30','H30～R01','R01～R02','R02～R03','5年平均'
+                        ],
+                        datasets:[{
+                            data: [diff1, diff2, diff3, diff4, geoMean],
+                            backgroundColor: [ 
+                                (diff1 < 0 ? "red" : "green"),
+                                (diff2 < 0 ? "red" : "green"),
+                                (diff3 < 0 ? "red" : "green"),
+                                (diff4 < 0 ? "red" : "green"),
+                                (geoMean < 0 ? "red" : "green")                 
+                            ]
+                        }]
+            };
+            
+            // 横棒グラフを作成
+            const myChart = new Chart(canvas.getContext("2d"),{
+                type: 'bar', 
+                data: data,
+                options: {
+                    responsive: false, //canvasサイズの自動設定を使わない
+                    plugins: {
+                        legend:{ // グラフ凡例を非表示に設定
+                            display: false
+                        }
+                    },
+                    indexAxis: 'y', //Chart.js 3.x系では横棒グラフの場合に設定
+                    scales: {
+                        x: {
+                            suggestedMin: -1,
+                            suggestedMax: 1,
+                        }
+                    }
+                }
+            });
+
+            return canvas;
+            
+        }
+
+        /**********************************************************************************
+        *
+        * 今後のクエリの移植・拡張用に定義だけしておく
+        * ※2021に追加:
+        **********************************************************************************/
+        const sleep = (milliseconds) => {
+            return new Promise(resolve => setTimeout(resolve, milliseconds))
+        };
+        const queryButton = document.getElementById("queryButton");
+        const clearButton = document.getElementById("clearButton");
+        queryButton.addEventListener("click", async () => {
+            document.getElementById("resultText").innerHTML = "<span style='color:red'><b>検索 </b></span>" + "処理は未実装です";
+            await sleep(3000);
+            document.getElementById("resultText").innerHTML = "";
+        });
+        clearButton.addEventListener("click", async () => {
+            document.getElementById("resultText").innerHTML = "<span style='color:red'><b>クリア </b></span>" + "処理は未実装です";
+            await sleep(3000);
+            document.getElementById("resultText").innerHTML = "";
+        });
+        
+      });
+    </script>
+    
+    </head> 
+    
+    <body>
+        <div id="viewDiv"></div>
+        <!--2021 操作用UI-->
+        <calcite-action 
+            id="toggle-button"
+            text="Toggle controlsDiv"
+            title="パネルを畳む"
+            icon="chevrons-left"
+            scale="s">
+        </calcite-action>
+        <calcite-panel id="controlsDiv" class="panel-side">
+            <br />
+            <calcite-label alignment="center" scale="l">
+            Calcite components を使った操作パネル
+            </calcite-label>
+            <div id="content" style="padding: 5px">
+                
+                <calcite-label><b>レイヤーの表示/非表示の操作</b></calcite-label>
+                <label>
+                    <calcite-checkbox id="gsipaleLyr"></calcite-checkbox> 地理院タイル-淡色地図 (WebTileLayer) <br />
+                </label>
+                <label>
+                    <calcite-checkbox id="chikakojiLyr" checked></calcite-checkbox> 公示地価 (FeatureLayer) <br />
+                </label>
+                <label>
+                    <calcite-checkbox id="cityareaLyr"></calcite-checkbox> 全国市区町村界 (FeatureLayer) <br />
+                </label>
+                <br />
+                
+                <label>
+                    <calcite-label><b>クエリの操作</b></calcite-label>
+                    <calcite-input id="attrTxt" prefix-text="市区町村名" type="text"
+                        placeholder="例:豊田市" max-length="10"></calcite-input>
+                    <div style="width: 360px; max-width: 100%; display: flex;flex-direction: row;">
+                        <calcite-button id="queryButton" width="half" appearance="solid"
+                            alignment="center" scale="m">検索</calcite-button>
+                        <calcite-button id="clearButton" width="half" appearance="outline"
+                            alignment="center" scale="m">クリア</calcite-button>
+                    </div>
+                </label>
+            </div>
+            <div id="resultsDiv" style="padding: 10px">
+                <span id="resultText"></span>
+            </div>
+        </calcite-panel>
+
+    </body>
+</html>
