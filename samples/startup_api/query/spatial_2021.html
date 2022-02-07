@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="initial-scale=1,maximum-scale=1,user-scalable=no">
+  <title>はじめての Web マッピングアプリケーション開発：クエリ編</title>
+
+  <style>
+    html,
+    body,
+    #viewDiv {
+      padding: 0;
+      margin: 0;
+      height: 100%;
+      width: 100%;
+    }
+
+    #controls {
+      top: 20px;
+      right: 20px;
+      position: absolute;
+      z-index: 99;
+      background-color: rgb(241, 240, 240);
+      border-radius: 8px;
+      padding: 10px;
+      opacity: 0.75;
+    }
+
+    #resultText {
+      font-weight: bold;
+      margin-left: 10px;
+    }
+  </style>
+
+  <link rel="stylesheet" href="https://js.arcgis.com/4.22/esri/css/main.css">
+  <script src="https://js.arcgis.com/4.22/"></script>
+
+  <script>
+    require([
+      "esri/views/MapView",
+      "esri/WebMap"
+    ], (MapView, WebMap) => {
+      // 市区町村レイヤー、地価公示レイヤーを参照するための変数
+      let cityareaLyr, chikakojiLyr;
+
+      const webmap = new WebMap({
+        portalItem: {
+          id: "197ed6474b0547b599091a46a8dc1077"
+        }
+      });
+
+      webmap.when(() => {
+        const ele = document.getElementById("layerToggle");
+
+        webmap.layers.forEach((layer) => {
+          const checkbox = document.createElement("input");
+          checkbox.type = "checkbox";
+          checkbox.id = layer.id;
+          checkbox.checked = layer.visible;
+          checkbox.onclick = (evt) => {
+            layer.visible = evt.target.checked;
+          };
+          ele.appendChild(checkbox);
+
+          const label = document.createElement("label");
+          label.htmlFor = layer.id;
+          label.innerHTML = layer.title;
+          ele.appendChild(label);
+          
+          const br = document.createElement("br");
+          ele.appendChild(br);
+
+          // レイヤー ID をもとにレイヤーを取得
+          if (layer.id === "municipalityboundaries2021_5687") {
+            // 市区町村界レイヤー
+            cityareaLyr = layer;
+          } else if (layer.id === "LandPrice_4765") {
+            // 地価公示価格レイヤー
+            chikakojiLyr = layer;
+          }
+        });
+      });
+
+      const view = new MapView({
+        map: webmap,
+        container: "viewDiv"
+      });
+
+      // 検索イベントハンドラ
+      document.getElementById("queryButton").addEventListener("click", doQuery);
+
+      // クリア処理
+      document.getElementById("clearButton").onclick = () => {
+        // 入力値、クエリ結果を削除
+        view.graphics.removeAll();
+        document.getElementById("resultText").innerHTML = "";
+        document.getElementById("attrTxt").value = "";
+      }
+
+      // クエリの実行
+      function doQuery(){
+
+        // input 要素に入力された文字列を取得
+        const str = document.getElementById("attrTxt").value;
+
+        // 市区町村のクエリ パラメーターの作成
+        const queryParams = cityareaLyr.createQuery();
+        queryParams.where = "SIKUCHOSON = '" + str + "' AND JCODE LIKE '23%'";
+        queryParams.returnGeometry = true;
+
+        // 前回のクエリ結果を削除
+        view.graphics.removeAll();
+
+        // クエリの実行
+        cityareaLyr.queryFeatures(queryParams)
+          .then(showCityArea)
+          .then(queryChikakoji)
+          .then(showChikakoji)
+          .catch(showErr);
+      }
+
+      // 市区町村の表示
+      function showCityArea(results){
+        // 結果フィーチャ数が 0 以上のとき
+        if (results.features.length > 0) {
+          // 結果フィーチャからグラフィックを作成
+          const graphics = results.features.map(feature => {
+            const graphic = feature.clone();
+            graphic.symbol = {
+              type: "simple-fill",
+              style: "none",
+              outline: {
+                color: "#00ffff",
+                width: "5px"
+              }
+            };
+            return graphic;
+          });
+
+          // グラフィックを表示
+          view.graphics.addMany(graphics);
+
+          // 空間検索で使用するためのフィーチャを返す
+          return results.features;
+        }
+      }
+
+      // 地価公示の取得
+      function queryChikakoji(features){
+        // クエリ パラメータの作成
+        const queryParams = chikakojiLyr.createQuery();
+        queryParams.geometry = features[0].geometry;
+        queryParams.spatialRelationship = "contains";
+        queryParams.where = "1 = 1";
+        queryParams.returnGeometry = true;
+
+        // クエリの実行
+        return chikakojiLyr.queryFeatures(queryParams);
+      }
+
+      // クエリの結果を表示
+      function showChikakoji(results){
+        // 結果フィーチャ数が 0 以上のとき
+        if (results.features.length > 0) {
+          // 結果フィーチャからグラフィックを作成
+          const graphics = results.features.map(feature => {
+            const graphic = feature.clone();
+            graphic.symbol = {
+              type: "simple-marker",
+              color: "#00ff80",
+              size: "12px"
+            };
+            return graphic;
+          });
+          // グラフィックを表示
+          view.graphics.addMany(graphics);
+          // グラフィックへズーム
+          view.goTo(graphics);
+
+          // フィーチャ数の表示
+          const count = results.features.length;
+          document.getElementById("resultText").innerHTML = "地価公示地点" + count + "箇所";
+        }
+      }
+
+      // エラーの表示
+      function showErr(err){
+        console.log("err:", err);
+      }
+      
+    });
+  </script>
+</head>
+
+<body>
+  <div id="viewDiv"></div>
+  <div id="controls">
+    <div id="layerToggle"></div>
+    <div id="queryToggle">
+      <input type="text" value="" placeholder="豊田市" id="attrTxt" />
+      <input type="button" value="検索" id="queryButton" />
+      <input type="button" value="クリア" id="clearButton" />
+    </div>
+    <div id="resultText"></div>
+  </div>
+</body>
+
+</html>

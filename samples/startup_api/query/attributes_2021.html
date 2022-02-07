@@ -1,0 +1,156 @@
+	<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="initial-scale=1,maximum-scale=1,user-scalable=no">
+  <title>はじめての Web マッピングアプリケーション開発：クエリ編</title>
+
+  <style>
+    html,
+    body,
+    #viewDiv {
+      padding: 0;
+      margin: 0;
+      height: 100%;
+      width: 100%;
+    }
+
+    #controls {
+      top: 20px;
+      right: 20px;
+      position: absolute;
+      z-index: 99;
+      background-color: white;
+      border-radius: 8px;
+      padding: 10px;
+      opacity: 0.75;
+    }
+  </style>
+
+  <link rel="stylesheet" href="https://js.arcgis.com/4.22/esri/css/main.css">
+  <script src="https://js.arcgis.com/4.22/"></script>
+
+  <script>
+    require([
+      "esri/views/MapView",
+      "esri/WebMap"
+    ], (MapView, WebMap) => {
+      // 市区町村レイヤーを参照するための変数
+      let cityareaLyr;
+
+      const webmap = new WebMap({
+        portalItem: {
+          id: "197ed6474b0547b599091a46a8dc1077"
+        }
+      });
+
+      webmap.when(() => {
+        const ele = document.getElementById("layerToggle");
+
+        webmap.layers.forEach((layer) => {
+          const checkbox = document.createElement("input");
+          checkbox.type = "checkbox";
+          checkbox.id = layer.id;
+          checkbox.checked = layer.visible;
+          checkbox.onclick = function(evt) {
+            layer.visible = evt.target.checked;
+          };
+          ele.appendChild(checkbox);
+
+          const label = document.createElement("label");
+          label.htmlFor = layer.id;
+          label.innerHTML = layer.title;
+          ele.appendChild(label);
+          
+          const br = document.createElement("br");
+          ele.appendChild(br);
+
+          // レイヤー ID をもとに市区町村レイヤーを取得
+          if (layer.id === "municipalityboundaries2021_5687") {
+            cityareaLyr = layer;
+          }
+        });
+      });
+
+      const view = new MapView({
+        map: webmap,
+        container: "viewDiv"
+      });
+      
+      // 検索ボタンのイベントハンドラ
+      document.getElementById("queryButton").addEventListener("click", doQuery);
+
+      // クリア処理
+      document.getElementById("clearButton").onclick = () => {
+        // 入力値、クエリ結果を削除
+        view.graphics.removeAll();
+        document.getElementById("resultText").innerHTML = "";
+        document.getElementById("attrTxt").value = "";
+      }
+
+      // クエリの実行
+      function doQuery(){
+        // 前回のクエリの結果を削除
+        view.graphics.removeAll();
+
+        // input 要素に入力された文字列を取得
+        const str = document.getElementById("attrTxt").value;
+
+        // クエリ パラメーターの作成
+        const queryParams = cityareaLyr.createQuery();
+        queryParams.where = "SIKUCHOSON = '" + str + "' AND JCODE LIKE '23%'";
+        queryParams.returnGeometry = true;
+
+        // クエリの実行
+        cityareaLyr.queryFeatures(queryParams)
+          .then(showResult)
+          .catch(showErr);
+      }
+
+      // クエリの結果を表示
+      function showResult(results){
+        // 結果フィーチャ数が 0 以上のとき
+        if (results.features.length > 0) {
+          // 結果フィーチャからグラフィックを作成
+          const graphics = results.features.map(function(feature) {
+            const graphic = feature.clone();
+            graphic.symbol = {
+              type: "simple-fill",
+              style: "none",
+              outline: {
+                color: "#00ffff",
+                width: "5px"
+              }
+            };
+            return graphic;
+          });
+
+          // グラフィックを表示
+          view.graphics.addMany(graphics);
+
+          // グラフィックへズーム
+          view.goTo(graphics);
+        }
+      }
+      
+      // エラーの表示
+      function showErr(err){
+        console.log(err);
+      }
+      
+    });
+  </script>
+</head>
+
+<body>
+  <div id="viewDiv"></div>
+  <div id="controls">
+    <div id="layerToggle"></div>
+    <div id="queryToggle">
+      <input type="text" value="" placeholder="豊田市" id="attrTxt"/>
+      <input type="button" value="検索" id="queryButton"/>
+      <input type="button" value="クリア" id="clearButton" />
+    </div>
+  </div>
+</body>
+</html>
