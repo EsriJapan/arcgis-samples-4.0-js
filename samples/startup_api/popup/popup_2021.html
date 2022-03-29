@@ -9,8 +9,8 @@
     https://developers.arcgis.com/javascript/latest/sample-code/sandbox/index.html?sample=intro-layers
   -->
   <!-- ArcGIS API for JavaScript の参照 -->
-  <link rel="stylesheet" href="https://js.arcgis.com/4.22/esri/themes/light/main.css" />
-  <script src="https://js.arcgis.com/4.22/"></script>
+  <link rel="stylesheet" href="https://js.arcgis.com/4.23/esri/themes/light/main.css" />
+  <script src="https://js.arcgis.com/4.23/"></script>
   <!-- スタイル設定 -->
   <style>
     html,
@@ -101,7 +101,8 @@
             //上で作成したレンダラーを適用する
             renderer: renderer,
             // 2021にデータを変更したことに伴いレイヤーが愛知県のみとなるようフィルタ定義を追加
-            definitionExpression: "L01_021 LIKE '23%'"
+            // 2022.3.28更新の令和4年版に対応（国土数値情報の製品仕様書第3.1版）
+            definitionExpression: "L01_022 LIKE '23%'" // 行政区域コード L01_021 => L01_022 に
         });
         
         // FeatureLayer：全国市区町村界データ 2021： Living Atlas
@@ -202,28 +203,28 @@
              // type: "text" の例
              {
                type: "text",　// コンテンツに表示する形式を設定（テキストを表示する場合は "text" を設定）
-               text: "標準地コードは {L01_001} 、周辺の土地利用の状況は {L01_044} です"
+               text: "標準地コードは {L01_001} 、周辺の土地利用の状況は {L01_047} です" // 周辺の土地利用の状況 L01_044 => L01_047 
              },
              // type: "fields" の例
              {
                type: "fields", // コンテンツに表示する形式を設定（属性値を表示する場合は "fields" を設定）
                fieldInfos: [{
-                 fieldName: "L01_092",　// フィールド名を設定
-                 label: "令和元年の価格",　// ラベルを設定
+                 fieldName: "L01_098",　// フィールド名を設定 // R4版のR2
+                 label: "令和２年の価格",　// ラベルを設定
                  format: {
                    digitSeparator: true, // 数値の3桁区切りを有効にする
                    places: 0 // 整数で表示する
                  }
                }, {
-                 fieldName: "L01_093",
-                 label: "令和２年の価格",
+                 fieldName: "L01_099",　// R4版のR3
+                 label: "令和３年の価格",
                  format: {
                    digitSeparator: true,
                    places: 0
                  }
                }, {
-                 fieldName: "L01_094",
-                 label: "令和３年の価格",
+                 fieldName: "L01_100", // R4版のR4
+                 label: "令和４年の価格",
                  format: {
                    digitSeparator: true,
                    places: 0

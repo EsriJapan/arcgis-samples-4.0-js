@@ -4,13 +4,13 @@
     <meta name="viewport" content="initial-scale=1, maximum-scale=1, user-scalable=no">
     <title>はじめての Web マッピングアプリケーション開発 2021：ポップアップ設定編その２</title>
     <!--Calcite components CDN-->
-    <script type="module" src="https://js.arcgis.com/calcite-components/1.0.0-beta.62/calcite.esm.js"></script>
-    <link rel="stylesheet" type="text/css" href="https://js.arcgis.com/calcite-components/1.0.0-beta.62/calcite.css"/>
+    <script type="module" src="https://js.arcgis.com/calcite-components/1.0.0-beta.77/calcite.esm.js"></script>
+    <link rel="stylesheet" type="text/css" href="https://js.arcgis.com/calcite-components/1.0.0-beta.77/calcite.css"/>
     <!-- Load the Chart.js library -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.6.0/chart.min.js"></script>
     <!--ArcGIS JS API CDN-->
-    <link rel="stylesheet" href="https://js.arcgis.com/4.22/esri/themes/light/main.css" />
-    <script src="https://js.arcgis.com/4.22/"></script>
+    <link rel="stylesheet" href="https://js.arcgis.com/4.23/esri/themes/light/main.css" />
+    <script src="https://js.arcgis.com/4.23/"></script>
     <style>
       html,
       body,
@@ -89,14 +89,15 @@
             visible: false
         });
         
-        // FeatureLayer：公示地価(国土数値情報 調査時点:令和3年1月1日)： Living Atlas
+        // FeatureLayer：公示地価(国土数値情報 調査時点:令和4年1月1日)： Living Atlas
         const chikakojiLyr = new FeatureLayer({
             url: "https://services.arcgis.com/wlVTGRSYTzAbjjiC/arcgis/rest/services/LandPrice/FeatureServer/0",
             id: "chikakoji",
             //上で作成したレンダラーを適用する
             renderer: renderer,
             // 2021にデータを変更したことに伴いレイヤーが愛知県のみとなるようフィルタ定義を追加
-            definitionExpression: "L01_021 LIKE '23%'"
+            // 2022.3.28更新の令和4年版に対応（国土数値情報の製品仕様書第3.1版）
+            definitionExpression: "L01_022 LIKE '23%'" // 行政区域コード L01_021 => L01_022 に
         });
         
         // FeatureLayer：全国市区町村界データ 2021： Living Atlas
@@ -281,21 +282,14 @@
             content: landpriceChange,
             fieldInfos: [
                 {
-                    fieldName: "L01_090",　// H29
+                    fieldName: "L01_096",　// R4 版のH30
                     format: {
                         digitSeparator: true, // 数値の3桁区切りを有効にする
                         places: 0 // 整数で表示する
                     }
                },
                 {
-                    fieldName: "L01_091", // H30
-                    format: {
-                        digitSeparator: true,
-                        places: 0
-                    }
-                },
-                {
-                    fieldName: "L01_092", // R1
+                    fieldName: "L01_097", // R4 版のR1
                     label: "令和元年価格(円/m2)",
                     format: {
                         digitSeparator: true,
@@ -303,14 +297,21 @@
                     }
                 },
                 {
-                    fieldName: "L01_093", // R2
+                    fieldName: "L01_098", // R4 版のR2
                     format: {
                         digitSeparator: true,
                         places: 0
                     }
                 },
                 {
-                    fieldName: "L01_094", // R3
+                    fieldName: "L01_099", // R4 版のR3
+                    format: {
+                        digitSeparator: true,
+                        places: 0
+                    }
+                },
+                {
+                    fieldName: "L01_100", // R4 版のR4
                     format: {
                         digitSeparator: true,
                         places: 0
@@ -332,19 +333,19 @@
               '<svg width="16" height="16"><polygon points="0 8.93 7.07 16 14.14 8.93 10.07 8.93 10.07 0 4.07 0 4.07 8.93 0 8.93" style="fill:red"/></svg>';
             
             // 住所
-            const address = feature.graphic.attributes.L01_023;
+            const address = feature.graphic.attributes.L01_025; //住居表示 R4版でL01_023 => L01_025 
             
             // 5年間の平均変動率の計算
-            const yearH29 = feature.graphic.attributes.L01_090;
-            const yearH30 = feature.graphic.attributes.L01_091;
-            const yearR1 = feature.graphic.attributes.L01_092;
-            const yearR2 = feature.graphic.attributes.L01_093;
-            const yearR3 = feature.graphic.attributes.L01_094;
+            const yearH30 = feature.graphic.attributes.L01_096;
+            const yearR1 = feature.graphic.attributes.L01_097;
+            const yearR2 = feature.graphic.attributes.L01_098;
+            const yearR3 = feature.graphic.attributes.L01_099;
+            const yearR4 = feature.graphic.attributes.L01_100;
             
-            let diff1 = calChange(yearH30, yearH29) + 1;
-            let diff2 = calChange(yearR1, yearH30) + 1;
-            let diff3 = calChange(yearR2, yearR1) + 1;
-            let diff4 = calChange(yearR3, yearR2) + 1;
+            let diff1 = calChange(yearR1, yearH30) + 1;
+            let diff2 = calChange(yearR2, yearR1) + 1;
+            let diff3 = calChange(yearR3, yearR2) + 1;
+            let diff4 = calChange(yearR4, yearR3) + 1;
             
             //const arr = [diff1, diff2, diff3, diff4];
             let arr = [];
@@ -370,11 +371,11 @@
             div.innerHTML = "住居表示:" + (address ? address : "") + "</br>" + 
                     "公示価格(円/m2): " + (yearR3 ? yearR3.toLocaleString() : "") + "</br>" + 
                     "<ul>" + 
-                    "<li>平成29年価格(円/m2): " + (yearH29 ? yearH29.toLocaleString() : "") + "</li>" + 
-                    "<li>平成30年価格(円/m2): " + (yearH30 ? yearH30.toLocaleString() : "") + " 変動率: " + (isFinite(diff1) ? diff1.toFixed(2) : "---") + "%</li>" + 
-                    "<li>令和元年価格(円/m2): " + (yearR1 ? yearR1.toLocaleString() : "")  + " 変動率: " + (isFinite(diff2) ? diff2.toFixed(2) : "---") + "%</li>" + 
-                    "<li>令和02年価格(円/m2): " + (yearR2 ? yearR2.toLocaleString() : "")  + " 変動率: " + (isFinite(diff3) ? diff3.toFixed(2) : "---") + "%</li>" + 
-                    "<li>令和03年価格(円/m2): " + (yearR3 ? yearR3.toLocaleString() : "") + " 変動率: " + (isFinite(diff4) ? diff4.toFixed(2) : "---") + "%</li>" + 
+                    "<li>平成30年価格(円/m2): " + (yearH30 ? yearH30.toLocaleString() : "") + "</li>" + 
+                    "<li>令和元年価格(円/m2): " + (yearR1 ? yearR1.toLocaleString() : "") + " 変動率: " + (isFinite(diff1) ? diff1.toFixed(2) : "---") + "%</li>" + 
+                    "<li>令和02年価格(円/m2): " + (yearR2 ? yearR2.toLocaleString() : "")  + " 変動率: " + (isFinite(diff2) ? diff2.toFixed(2) : "---") + "%</li>" + 
+                    "<li>令和03年価格(円/m2): " + (yearR3 ? yearR3.toLocaleString() : "")  + " 変動率: " + (isFinite(diff3) ? diff3.toFixed(2) : "---") + "%</li>" + 
+                    "<li>令和04年価格(円/m2): " + (yearR4 ? yearR4.toLocaleString() : "") + " 変動率: " + (isFinite(diff4) ? diff4.toFixed(2) : "---") + "%</li>" + 
                     "<li>" + (n + 1) + "年間の平均変動率: " + arrow + 
                     "<span style='color: " +
                     (geoMean < 0 ? "red" : "green") + ";'>" + 
@@ -398,7 +399,7 @@
 
             const data = {
                         labels: [
-                            'H29～H30','H30～R01','R01～R02','R02～R03','5年平均'
+                            'H30～R01','R01～R02','R02～R03','R03～R04','5年平均'
                         ],
                         datasets:[{
                             data: [diff1, diff2, diff3, diff4, geoMean],
