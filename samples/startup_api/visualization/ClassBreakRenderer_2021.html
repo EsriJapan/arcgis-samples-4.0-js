@@ -9,8 +9,8 @@
     https://developers.arcgis.com/javascript/latest/sample-code/sandbox/index.html?sample=intro-layers
   -->
   <!-- ArcGIS API for JavaScript の参照 -->
-  <link rel="stylesheet" href="https://js.arcgis.com/4.22/esri/themes/light/main.css" />
-  <script src="https://js.arcgis.com/4.22/"></script>
+  <link rel="stylesheet" href="https://js.arcgis.com/4.23/esri/themes/light/main.css" />
+  <script src="https://js.arcgis.com/4.23/"></script>
   <!-- スタイル設定 -->
   <style>
     html,
@@ -37,7 +37,7 @@
     .esri-legend__service-label::after{
       white-space: pre ;
       font-size: 14px ;
-      content:"令和３年地価公示価格";
+      content:"令和４年地価公示価格";
     }
     .esri-legend__layer-caption{
       display: none;
@@ -118,7 +118,7 @@
         //レンダラーを定義
         const renderer = {
           type: "class-breaks",
-          field: "L01_094", //令和３年
+          field: "L01_100", //R4版の令和４年
           //クラス範囲を設定し、上で作成したシンボルをそれぞれに割り当てる
           classBreakInfos: [{
             minValue: 3340,
@@ -174,7 +174,8 @@
             //上で作成したレンダラーを適用する
             renderer: renderer,
             // 2021にデータを変更したことに伴いレイヤーが愛知県のみとなるようフィルタ定義を追加
-            definitionExpression: "L01_021 LIKE '23%'"
+            // 2022.3.28更新の令和4年版に対応（国土数値情報の製品仕様書第3.1版）
+            definitionExpression: "L01_022 LIKE '23%'" // 行政区域コード L01_021 => L01_022 に
         });
         
         // FeatureLayer：全国市区町村界データ 2021： Living Atlas
