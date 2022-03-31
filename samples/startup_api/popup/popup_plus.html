@@ -252,7 +252,7 @@
             content: [
                 {
                     type: "text",
-                    text: "自治体コード: {JCODE}" + "</br>" + "都道府県名: {KEN}" + "</br>" +"市区町村名: {SIKUCHOSON}"
+                    text: "自治体コード: {JCODE}" + "</br>" + "都道府県名: {KEN}" + "</br>" +"市区町村名: {SEIREI}{SIKUCHOSON}"
                 }
             ]
         };
@@ -333,7 +333,8 @@
               '<svg width="16" height="16"><polygon points="0 8.93 7.07 16 14.14 8.93 10.07 8.93 10.07 0 4.07 0 4.07 8.93 0 8.93" style="fill:red"/></svg>';
             
             // 住所
-            const address = feature.graphic.attributes.L01_025; //住居表示 R4版でL01_023 => L01_025 
+            //const address = feature.graphic.attributes.L01_025; //住居表示 R4版でL01_023 => L01_025 
+            const address = feature.graphic.attributes.L01_024; // 2022.3.31 住居表示から所在および地番に変更
             
             // 5年間の平均変動率の計算
             const yearH30 = feature.graphic.attributes.L01_096;
@@ -368,8 +369,8 @@
             const arrow = geoMean >= 0 ? upArrow : downArrow;
             
 
-            div.innerHTML = "住居表示:" + (address ? address : "") + "</br>" + 
-                    "公示価格(円/m2): " + (yearR3 ? yearR3.toLocaleString() : "") + "</br>" + 
+            div.innerHTML = "住所:" + (address ? address : "") + "</br>" + // 2022.3.31 変更 "住居表示:" + (address ? address : "") + "</br>" + 
+                    "公示価格(円/m2): " + (yearR4 ? yearR4.toLocaleString() : "") + "</br>" + 
                     "<ul>" + 
                     "<li>平成30年価格(円/m2): " + (yearH30 ? yearH30.toLocaleString() : "") + "</li>" + 
                     "<li>令和元年価格(円/m2): " + (yearR1 ? yearR1.toLocaleString() : "") + " 変動率: " + (isFinite(diff1) ? diff1.toFixed(2) : "---") + "%</li>" + 
