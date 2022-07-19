@@ -19,17 +19,23 @@
         margin: 0;
         height: 100%;
         width: 100%;
+        overflow: hidden;
       }
 
        .panel-side {
         padding: 0px;
         width: 390px;
-        height: 38%;
+        height: 30%;
         position: absolute;
         top: 10px;
         left: 60px;
         z-index: 60;
         opacity: 0.9;
+      }
+      
+      #resultsListDiv {
+        overflow: auto;
+        display: none;
       }
     </style>
     
@@ -39,9 +45,12 @@
         "esri/Basemap",
         "esri/views/MapView",
         "esri/layers/WebTileLayer",
-        "esri/layers/FeatureLayer"
+        "esri/layers/FeatureLayer",
+        "esri/widgets/Expand",
+        "esri/widgets/BasemapGallery",
+        "esri/widgets/BasemapGallery/support/LocalBasemapsSource"
     ],
-    (Map, Basemap, MapView, WebTileLayer,  FeatureLayer) => {
+    (Map, Basemap, MapView, WebTileLayer, FeatureLayer, Expand, BasemapGallery, LocalBasemapsSource) => {
         
         /**********************************************************************************
         *
@@ -81,6 +90,7 @@
         // 地理院タイルの形式から WebTileLayer への読み換え
         // 【読み換え前】https://cyberjapandata.gsi.go.jp/xyz/pale/{z}/{x}/{y}.png
         // 【読み換え後】https://cyberjapandata.gsi.go.jp/xyz/pale/{level}/{col}/{row}.png
+        /* Custom BasemapGallery へ移行したので未使用
         const gsipaleLyr = new WebTileLayer({
             urlTemplate: "https://cyberjapandata.gsi.go.jp/xyz/pale/{level}/{col}/{row}.png",
             id: "gsipale",
@@ -88,6 +98,7 @@
             copyright: "地理院タイル（淡色地図）",
             visible: false
         });
+        */
         
         // FeatureLayer：公示地価(国土数値情報 調査時点:令和4年1月1日)： Living Atlas
         const chikakojiLyr = new FeatureLayer({
@@ -134,7 +145,7 @@
         // もしくは map.add() を使って map にレイヤーを追加することも可能
         // レイヤー描画の順番が変更された模様
         map.add(cityareaLyr, 0);
-        map.add(gsipaleLyr, 0);
+        //map.add(gsipaleLyr, 0);
         
         // MapView を作成し map インスタンスを追加
         const view = new MapView({
@@ -143,15 +154,70 @@
         });
         
         /**********************************************************************************
+        *
+        * 背景地図の切り替えを Custom BasemapGallery で切り替え可能なように変更
+        * 2022.07.19 追加
+        **********************************************************************************/
+        // 道路地図（vector）
+        const streetsVMap = new Basemap(
+            {portalItem: {id: "accf3eff22254ed69e23afeb094a4881"}}
+        );
+        // 道路（夜）（streets-night-vector）
+        const streetsNVMap = new Basemap(
+            {portalItem: {id: "ee3092a72f464186b6a192e82819d438"}}
+        );
+        // 地形図
+        const topoVMap = new Basemap(
+            {portalItem: {id: "9e74c6647b6e41538fb3b2a4b7e90784"}}
+        );
+        // キャンバス（ライトグレー）
+        const canvasLVMap = new Basemap(
+            {portalItem: {id: "5197e41ded62497b835a7b82bbde8826"}}
+        );
+        // 地理院 - 淡色地図
+        const paleMap = new Basemap({
+            baseLayers:[new WebTileLayer({
+                urlTemplate: "https://cyberjapandata.gsi.go.jp/xyz/pale/{level}/{col}/{row}.png",
+                copyright: "地理院タイル （https://maps.gsi.go.jp/development/ichiran.html）"
+            })],
+            title: "地理院タイル - 淡色地図",
+            id: "palemap",
+            thumbnailUrl: "https://cyberjapandata.gsi.go.jp/xyz/pale/12/3637/1612.png"
+        });
+        // 地理院 - 写真
+        const seamlessPhoto = new Basemap({
+            baseLayers:[new WebTileLayer({
+                urlTemplate: "https://cyberjapandata.gsi.go.jp/xyz/seamlessphoto/{level}/{col}/{row}.jpg",
+                copyright: "地理院タイル （https://maps.gsi.go.jp/development/ichiran.html）"
+            })],
+            title: "地理院タイル - 写真",
+            id: "seamlessphoto",
+            thumbnailUrl:"https://cyberjapandata.gsi.go.jp/xyz/seamlessphoto/16/58274/25716.jpg"
+        });
+        const localSource = new LocalBasemapsSource({
+            basemaps: [streetsVMap, streetsNVMap, topoVMap, canvasLVMap, paleMap, seamlessPhoto]
+        });
+        const basemapGallery = new BasemapGallery({
+            view: view,
+            source: localSource
+        });
+        const bgExpand = new Expand({
+            view: view,
+            content: basemapGallery,
+            autoCollapse: true
+        });
+        view.ui.add(bgExpand, "bottom-right");
+
+        /**********************************************************************************
         * view の ”layerview-create” イベントで
         * コンソール内でそれらのプロパティを確認できるよう print 文で出力
         * 
         **********************************************************************************/
         view.on("layerview-create", (event) => {
-          if (event.layer.id === "gsipale") {
-            // gsipaleLyr view のプロパティを確認できる
-            console.log("地理院タイル（淡色地図）の LayerView が作成されました!", event.layerView);
-          }
+          //if (event.layer.id === "gsipale") {
+          //  // gsipaleLyr view のプロパティを確認できる
+          //  console.log("地理院タイル（淡色地図）の LayerView が作成されました!", event.layerView);
+          //}
           if (event.layer.id === "chikakoji"){
             // chikakojiLyr view のプロパティを確認できる
             console.log("公示地価 の LayerView が作成されました!", event.layerView);
@@ -173,6 +239,7 @@
         *     definitionExpression　を定義した。そのため、view.goTo の書き方も以下のHelpにあるように変更した。
         *     https://developers.arcgis.com/javascript/latest/sample-code/featurelayer-queryextent/
         **********************************************************************************/
+        let chikakojiLyrView; // 2022.07.08 ハイライト表示用に追加
         /*
         view.when(function() {
             chikakojiLyr.when(function() {
@@ -191,8 +258,13 @@
                 // https://developers.arcgis.com/javascript/latest/api-reference/esri-views-MapView.html#methods-summary
                 view.goTo(response.extent, {"duration":1000}); 
             });
+            // 2022.07.08 ハイライト表示用に追加
+            view.whenLayerView(chikakojiLyr).then(layerView => {
+                chikakojiLyrView = layerView;
+            });
         });
-        
+
+
         /**********************************************************************************
         * レイヤーの visible プロパティで view 内でのレイヤーの表示/非表示を切り替えを行う
         * なお、レイヤーが非表示状態であっても、そのレイヤーのプロパティにアクセスしたり、
@@ -200,12 +272,13 @@
         * ※2021に変更:
         *     dojo/on を使っていたものから書き換え、ついでにアロー関数で書き換え、レイヤーのvisible 状態を反転に書き換え
          **********************************************************************************/
-        const gsipaleToggle = document.getElementById("gsipaleLyr");
+        //const gsipaleToggle = document.getElementById("gsipaleLyr");
         const chikakojiToggle = document.getElementById("chikakojiLyr");
         const cityareaToggle = document.getElementById("cityareaLyr");
+        /*
         gsipaleToggle.addEventListener("calciteCheckboxChange", () => {
             gsipaleLyr.visible = !(gsipaleLyr.visible); //gsipaleToggle.checked;
-        });
+        });*/
         chikakojiToggle.addEventListener("calciteCheckboxChange", () => {
             chikakojiLyr.visible = !(chikakojiLyr.visible); //chikakojiToggle.checked;
         });
@@ -443,22 +516,223 @@
         *
         * 今後のクエリの移植・拡張用に定義だけしておく
         * ※2021に追加:
+        * ※2022年07月にクエリの拡張をMr.Hiramatsu が実装したものから移植
+        * 参考：
+        * https://developers.arcgis.com/javascript/latest/sample-code/sandbox/?sample=featurelayer-query-pagination
         **********************************************************************************/
-        const sleep = (milliseconds) => {
-            return new Promise(resolve => setTimeout(resolve, milliseconds))
-        };
+        // 実行/クリアボタン定義
         const queryButton = document.getElementById("queryButton");
         const clearButton = document.getElementById("clearButton");
-        queryButton.addEventListener("click", async () => {
-            document.getElementById("resultText").innerHTML = "<span style='color:red'><b>検索 </b></span>" + "処理は未実装です";
-            await sleep(3000);
+
+        // 入力欄メッセージ欄の定義
+        const alertMsg = document.getElementById("popAlert");
+
+        // 実行ボタン処理
+        queryButton.addEventListener("click", doQuery);
+
+        // クリアボタン処理
+        clearButton.addEventListener("click", doClear);
+        clearButton.addEventListener("click", clearInputText);
+
+        // クリアの実行
+        function doClear() {
+            // 地価公示とクエリ結果の削除とUIの初期化
+            view.graphics.removeAll();
             document.getElementById("resultText").innerHTML = "";
+            document.getElementById("controlsDiv").style.height = "30%";
+            document.getElementById("resultsList").innerHTML = "";
+            document.getElementById("resultsListDiv").style.display = "none";
+        }
+
+        function clearInputText(){
+            document.getElementById("attrTxt").value = "";
+        }
+
+        // クエリの実行
+        async function doQuery() {
+
+            // 前回のクエリ結果を削除
+            doClear();
+
+            // input 要素に入力された文字列を取得
+            const str = document.getElementById("attrTxt").value;
+
+            // 入力欄が設定されていない場合はエラー
+            if (!str) {
+                // 市区町村名の入力欄にエラーメッセージを表示
+                document.getElementById("alertMessage").innerHTML = "市区町村名は必須項目です。";
+                alertMsg.toggle('true');
+                return;
+            }
+
+            // 市区町村のクエリ パラメーターの作成
+            const queryParams = cityareaLyr.createQuery();
+            queryParams.where = "SEIREI || SIKUCHOSON LIKE '%" + str + "%' AND JCODE LIKE '23%'";
+            queryParams.returnGeometry = true;
+            queryParams.outSpatialReference = view.spatialReference;
+
+            // クエリの実行
+            await cityareaLyr.queryFeatures(queryParams)
+                .then(showCityArea)
+                .then(queryChikakoji)
+                .then(showChikakoji)
+                .catch(showErr);
+        }
+
+        // 市区町村の表示
+        function showCityArea(results) {
+            // 結果フィーチャ数が 0 以上のとき
+            if (results.features.length > 0) {
+                // 結果フィーチャからグラフィックを作成
+                const graphics = results.features.map(feature => {
+                    const graphic = feature.clone();
+                    graphic.symbol = {
+                        type: "simple-fill",
+                        style: "none",
+                        outline: {
+                            color: "#00ffff",
+                            width: "5px"
+                        }
+                    };
+                    return graphic;
+                });
+
+                // グラフィックをviewに追加して表示
+                view.graphics.addMany(graphics);
+
+                // グラフィックへズーム
+                view.goTo(graphics);
+
+                // 空間検索で使用するためのフィーチャを返す
+                return results.features;
+
+            } else {
+                // 対象の都道府県に無い市区町村を設定されている場合はエラー
+                // 市区町村名の入力欄にエラーメッセージを表示
+                document.getElementById("alertMessage").innerHTML = " 対象の市区町村は指定されている都道府県にはありません。";
+                alertMsg.toggle('true');
+                throw new Error('対象の市区町村は指定されている都道府県にはありません。');
+            }
+        }
+
+        // 空間検索して地価公示を取得
+        async function queryChikakoji(features) {
+            // 地価公示の空間検索用のクエリ パラメータを作成
+            const queryParams = chikakojiLyr.createQuery();
+            // queryParams.geometry = features[0].geometry;
+            // 複数の市区町村界フィーチャがある場合にも対応するようにfor 文を使っている
+            for (let cnt = 0; cnt < features.length; cnt++) {
+                if (cnt == 0) {
+                    queryParams.geometry = features[cnt].geometry;
+                } else {
+                    for (let num1 = 0; num1 < features[cnt].geometry.rings.length; num1++) {
+                        const points = [];
+                        for (let num2 = 0; num2 < features[cnt].geometry.rings[num1].length; num2++) {
+                            points.push(features[cnt].geometry.getPoint(num1, num2));
+                        }
+                        queryParams.geometry.addRing(points);
+                    }
+                }
+            }
+            queryParams.spatialRelationship = "contains";
+            queryParams.where = "1 = 1";
+            queryParams.returnGeometry = true;
+
+            // クエリの実行
+            return chikakojiLyr.queryFeatures(queryParams);
+        }
+
+        // クエリの結果を表示
+        let graphics = null;
+        function showChikakoji(results) {
+            // 結果フィーチャ数が 0 以上のとき
+            if (results.features.length > 0) {
+                // 結果フィーチャからグラフィックを作成
+                graphics = results.features.map(feature => {
+                    const graphic = feature.clone();
+                    graphic.symbol = {
+                        type: "simple-marker",
+                        color: "#ffb700", //"#00ff80",
+                        size: "12px"
+                    };
+                    return graphic;
+                });
+                // グラフィックを表示
+                view.graphics.addMany(graphics);
+                // グラフィックへズーム
+                //view.goTo(graphics);
+
+                // フィーチャ数の表示
+                const count = results.features.length;
+                document.getElementById("resultText").innerHTML = "地価公示地点" + count + "箇所";
+
+                // 取得した結果を"calcite-pick-list-item"のアイテムとしてリスト表示
+                document.getElementById("resultsList").innerHTML = "";
+                graphics.forEach((result, index) => {
+                    const attributes = result.attributes;
+                    const item = document.createElement("calcite-pick-list-item");
+                    item.setAttribute("label", attributes.L01_024);
+                    item.setAttribute("value", index);
+
+                    const usage = `利用状況: ${attributes.L01_027}`;
+                    item.setAttribute("description", usage);
+                    item.addEventListener("click", resultClickHandler);
+                    document.getElementById("resultsList").appendChild(item);
+                });
+
+                document.getElementById("resultsListDiv").style.display = "block";
+                document.getElementById("controlsDiv").style.height = "76%";
+            }
+        }
+        
+
+        let highlightSelect;
+        // 結果リスト用のクリック処理
+        function resultClickHandler(event) {
+            const target = event.target;
+            const resultId = target.getAttribute("value");
+
+            // クリックした住所に該当するグラフィックを取得
+            const result =
+              resultId && graphics && graphics[parseInt(resultId, 10)];
+
+            if (result) {
+              // 対象のポイントのポップアップを表示
+              view.popup.open({
+                features: [result],
+                location: result.geometry
+              });
+              // 対象のポイントへ移動
+              view.goTo(result);
+            }
+
+            // ハイライト表示
+            if (highlightSelect){
+                highlightSelect.remove();
+            }
+            highlightSelect = chikakojiLyrView.highlight(result);
+        }
+
+        // エラーの表示
+        function showErr(err) {
+            console.log("err:", err);
+            // 前回のクエリ結果を削除
+            doClear();
+        }
+
+        // アラートが開いた時の処理
+        alertMsg.addEventListener('calcitePopoverOpen', async (event) => {
+            // アラートのメッセージが表示された 3 秒後にアラートを消す
+            await delay(3);
+            alertMsg.toggle("false");
         });
-        clearButton.addEventListener("click", async () => {
-            document.getElementById("resultText").innerHTML = "<span style='color:red'><b>クリア </b></span>" + "処理は未実装です";
-            await sleep(3000);
-            document.getElementById("resultText").innerHTML = "";
-        });
+
+        // 待機用メソッド
+        function delay(n){
+            return new Promise(function(resolve){
+                setTimeout(resolve,n*1000);
+            });
+        }
         
       });
     </script>
@@ -483,9 +757,9 @@
             <div id="content" style="padding: 5px">
                 
                 <calcite-label><b>レイヤーの表示/非表示の操作</b></calcite-label>
-                <label>
+                <!--<label>
                     <calcite-checkbox id="gsipaleLyr"></calcite-checkbox> 地理院タイル-淡色地図 (WebTileLayer) <br />
-                </label>
+                </label>-->
                 <label>
                     <calcite-checkbox id="chikakojiLyr" checked></calcite-checkbox> 公示地価 (FeatureLayer) <br />
                 </label>
@@ -496,6 +770,13 @@
                 
                 <label>
                     <calcite-label><b>クエリの操作</b></calcite-label>
+                    <calcite-popover-manager>
+                        <calcite-popover  id="popAlert" label="Alert label" reference-element="attrTxt">
+                            <p style="padding:0 10px;display:flex;flex-direction:row">
+                                <calcite-icon icon="exclamation-mark-circle-f"></calcite-icon> <span id="alertMessage" style="color: red; font-weight: bold; margin-left: 5px; font-size: 120%;"></span>
+                            </p>
+                        </calcite-popover>
+                    </calcite-popover-manager>
                     <calcite-input id="attrTxt" prefix-text="市区町村名" type="text"
                         placeholder="例:豊田市" max-length="10"></calcite-input>
                     <div style="width: 360px; max-width: 100%; display: flex;flex-direction: row;">
@@ -506,8 +787,12 @@
                     </div>
                 </label>
             </div>
+            <!--クエリ操作の結果を表示するUIを定義-->
             <div id="resultsDiv" style="padding: 10px">
                 <span id="resultText"></span>
+                <calcite-panel id="resultsListDiv">
+                    <calcite-pick-list id="resultsList" style="padding: 5px"></calcite-pick-list>
+                </calcite-panel>
             </div>
         </calcite-panel>
 
