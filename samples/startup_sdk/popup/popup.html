@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="initial-scale=1, maximum-scale=1, user-scalable=no" />
+  <title>ArcGIS で始める Web マップアプリ開発　ポップアップ編</title>
+
+  <style>
+    html,
+    body {
+      padding: 0;
+      margin: 0;
+      height: 100%;
+      width: 100%;
+    }
+  </style>
+  <!-- API キー認証を使用する場合、下記を利用してください -->
+  <!-- <script>
+    var esriConfig = { apiKey: "YOUR_ACCESS_TOKEN" };
+  </script> -->
+
+  <!-- Calcite Design System をロード -->
+  <script type="module" src="https://js.arcgis.com/calcite-components/3.2.1/calcite.esm.js"></script>
+
+  <!-- ArcGIS Maps SDK for JavaScript コア API をロード -->
+  <script src="https://js.arcgis.com/4.34/"></script>
+
+  <!-- マップ コンポーネントをロード -->
+  <script type="module" src="https://js.arcgis.com/4.34/map-components/"></script>
+
+</head>
+
+<body>
+  <arcgis-map basemap="topo-vector" center="138, 35.5" zoom="5">
+    <arcgis-layer-list slot="top-right"></arcgis-layer-list>
+  </arcgis-map>
+
+
+  <script type="module">
+    const [WebTileLayer, FeatureLayer, FieldConfiguration] = await $arcgis.import([
+      "@arcgis/core/layers/WebTileLayer",
+      "@arcgis/core/layers/FeatureLayer",
+      // FieldConfiguration モジュールのインポート 追加開始
+      "@arcgis/core/layers/support/FieldConfiguration.js"
+      // 追加終了
+    ]);
+
+    // PopupTemplate の作成
+    const popupLandprice = {
+      title: "地価公示",
+
+      fieldInfos: [{
+        fieldName: "L01_006", // 地価公示価格
+      }, {
+        fieldName: "L01_028", // 利用状況
+      }],
+
+      content: [{
+        // テキストの表示 追加・書き換え開始
+        type: "text",
+        text: "最寄り駅は{L01_048}駅で、{L01_049} m 離れています。"
+      },
+      // 追加・書き換え終了
+      { // 属性値の表示
+        type: "fields",
+      },
+      // グラフの表示 追加開始
+      {
+        type: "media",
+        mediaInfos: [
+          {
+            type: "column-chart",
+            title: "直近3年間の調査価格の変遷",
+            value: {
+              fields: ["L01_101", "L01_102", "L01_103"],
+              normalizeField: null,
+              tooltipField: "LandPrice",
+            },
+          },
+        ],
+      },
+        // 追加終了
+      ],
+    };
+
+    // 地価公示レイヤーの読み込みと popupTemplate プロパティの設定
+    const landpriceLyr = new FeatureLayer({
+      url: "https://services.arcgis.com/wlVTGRSYTzAbjjiC/ArcGIS/rest/services/LandPrice/FeatureServer",
+      id: "landprice",
+      definitionExpression: "L01_022 = '13201'",
+      title: "八王子市の地価公示(FeatureLayer)",
+      opacity: 0.7,
+      popupTemplate: popupLandprice,
+
+      // FieldConfiguration プロパティの設定 追加開始
+      fieldConfigurations: [
+        new FieldConfiguration({
+          name: "L01_006",
+          alias: "地価公示価格（円/㎡）", // ポップアップで表示されるフィールド名
+          fieldFormat: { type: "number", userGrouping: "always" }
+        }),
+        new FieldConfiguration({
+          name: "L01_028",
+          alias: "利用状況" // ポップアップで表示されるフィールド名
+        })
+      ] // 追加終了
+    });
+
+    // 市区町村界レイヤーの読み込み以降はシリーズ 2 回目と同様に記述
+    const cityareaLyr = new FeatureLayer({
+      url: "https://services.arcgis.com/wlVTGRSYTzAbjjiC/arcgis/rest/services/ZENKOKU_CITY_view/FeatureServer",
+      id: "cityarea",
+      title: "全国市区町村界(FeatureLayer)",
+      opacity: 0.5,
+      definitionExpression: "CITY = '八王子市'"
+    });
+
+    const gsipaleLyr = new WebTileLayer({
+      urlTemplate: "https://cyberjapandata.gsi.go.jp/xyz/pale/{level}/{col}/{row}.png",
+      id: "gsipale",
+      opacity: 0.9,
+      copyright: "地理院タイル（淡色地図）",
+      title: "地理院タイル-淡色地図(WebTileLayer)",
+      visible: false
+    });
+
+    const mapElement = document.querySelector("arcgis-map");
+    await mapElement.viewOnReady();
+
+    mapElement.map.addMany([gsipaleLyr, cityareaLyr, landpriceLyr]);
+
+    mapElement.whenLayerView(cityareaLyr)
+      .then(() => {
+        mapElement.goTo({
+          center: [139.32, 35.65],
+          zoom: 12
+        });
+      }).catch(() => {
+        console.error("MapView rejected:", err);
+      });
+  </script>
+</body>
+
+</html>

@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="initial-scale=1, maximum-scale=1, user-scalable=no" />
+  <title>ArcGIS で始める Web マップアプリ開発　様々な地図表現編</title>
+
+  <style>
+    html,
+    body {
+      padding: 0;
+      margin: 0;
+      height: 100%;
+      width: 100%;
+    }
+  </style>
+  <!-- API キー認証を使用する場合、下記を利用してください -->
+  <!-- <script>
+    var esriConfig = { apiKey: "YOUR_ACCESS_TOKEN" };
+  </script> -->
+
+  <!-- Calcite Design System をロード -->
+  <script type="module" src="https://js.arcgis.com/calcite-components/3.2.1/calcite.esm.js"></script>
+
+  <!-- ArcGIS Maps SDK for JavaScript コア API をロード -->
+  <script src="https://js.arcgis.com/4.34/"></script>
+
+  <!-- マップ コンポーネントをロード -->
+  <script type="module" src="https://js.arcgis.com/4.34/map-components/"></script>
+
+</head>
+
+<body>
+  <arcgis-map basemap="topo-vector" center="138, 35.5" zoom="5">
+    <arcgis-layer-list slot="top-right"></arcgis-layer-list>
+    <!-- 凡例の実装 追加開始 -->
+    <arcgis-legend slot="top-left"></arcgis-legend>
+    <!-- 追加終了 -->
+  </arcgis-map>
+
+  <script type="module">
+    const [WebTileLayer, FeatureLayer] = await $arcgis.import([
+      "@arcgis/core/layers/WebTileLayer",
+      "@arcgis/core/layers/FeatureLayer",
+    ]);
+
+    // 国道シンボルを定義
+    const kokudoSym = {
+      type: "simple-marker",
+      size: 8,
+      color: "red", // 国道、都道、その他、のそれぞれで色を設定
+      outline: {
+        color: "white",
+        width: 1
+      }
+    };
+    // 都道シンボルを定義
+    const todoSym = {
+      type: "simple-marker",
+      size: 8,
+      color: "blue",
+      outline: {
+        color: "white",
+        width: 1
+      }
+    };
+    // その他のシンボルを定義
+    const otherSym = {
+      type: "simple-marker",
+      size: 8,
+      color: "grey",
+      outline: {
+        color: "white",
+        width: 1
+      }
+    };
+
+    // 　個別値のレンダラーを定義
+    const renderer = {
+      type: "unique-value",
+      field: "L01_039", // 前面道路状況フィールドを選択
+      uniqueValueInfos: [{
+        value: "国道",  // 国道のシンボルを定義
+        symbol: kokudoSym,
+        label: "前面が国道"
+      }, {
+        value: "都道",  // 都道のシンボルを定義
+        symbol: todoSym,
+        label: "前面が都道"
+      }],
+      defaultSymbol: otherSym,  // その他のシンボルを定義
+      defaultLabel: "その他"
+    };
+
+    const landpriceLyr = new FeatureLayer({
+      url: "https://services.arcgis.com/wlVTGRSYTzAbjjiC/ArcGIS/rest/services/LandPrice/FeatureServer",
+      id: "landprice",
+      definitionExpression: "L01_022 = '13201'",
+      title: "八王子市の地価公示(FeatureLayer)",
+      // 上で定義したレンダラーを適用する
+      renderer: renderer,
+    });
+
+    const cityareaLyr = new FeatureLayer({
+      url: "https://services.arcgis.com/wlVTGRSYTzAbjjiC/arcgis/rest/services/municipalityboundaries2021/FeatureServer",
+      id: "cityarea",
+      title: "全国市区町村界(FeatureLayer)",
+      opacity: 0.5,
+      definitionExpression: "SIKUCHOSON = '八王子市'"
+    });
+
+    const mapElement = document.querySelector("arcgis-map");
+    await mapElement.viewOnReady();
+
+    mapElement.map.addMany([
+      cityareaLyr,
+      landpriceLyr
+    ]);
+
+    mapElement.whenLayerView(landpriceLyr)
+      .then(() => {
+        mapElement.goTo({
+          center: [139.32, 35.65],
+          zoom: 12
+        });
+      }).catch(() => {
+        console.error("MapView rejected:", err);
+      });
+  </script>
+</body>
+
+</html>

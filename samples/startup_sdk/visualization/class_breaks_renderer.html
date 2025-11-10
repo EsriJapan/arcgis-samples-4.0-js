@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="initial-scale=1, maximum-scale=1, user-scalable=no" />
+  <title>ArcGIS で始める Web マップアプリ開発　様々な地図表現編</title>
+
+  <style>
+    html,
+    body {
+      padding: 0;
+      margin: 0;
+      height: 100%;
+      width: 100%;
+    }
+  </style>
+  <!-- API キー認証を使用する場合、下記を利用してください -->
+  <!-- <script>
+    var esriConfig = { apiKey: "YOUR_ACCESS_TOKEN" };
+  </script> -->
+
+  <!-- Calcite Design System をロード -->
+  <script type="module" src="https://js.arcgis.com/calcite-components/3.2.1/calcite.esm.js"></script>
+
+  <!-- ArcGIS Maps SDK for JavaScript コア API をロード -->
+  <script src="https://js.arcgis.com/4.34/"></script>
+
+  <!-- マップ コンポーネントをロード -->
+  <script type="module" src="https://js.arcgis.com/4.34/map-components/"></script>
+
+</head>
+
+<body>
+  <arcgis-map basemap="topo-vector" center="138, 35.5" zoom="5">
+    <arcgis-layer-list slot="top-right"></arcgis-layer-list>
+    <arcgis-legend slot="top-left"></arcgis-legend>
+  </arcgis-map>
+
+  <script type="module">
+    const [WebTileLayer, FeatureLayer] = await $arcgis.import([
+      "@arcgis/core/layers/WebTileLayer",
+      "@arcgis/core/layers/FeatureLayer",
+    ]);
+
+    // シンボル、およびレンダラーの定義
+    const renderer = {
+      type: "class-breaks",
+      field: "L01_006",
+      classBreakInfos: [{
+        // 10万円以下
+        minValue: 0, maxValue: 100000,
+        symbol: { type: "simple-marker", size: 8, color: "green", outline: { color: "white", width: 0.5 } },
+        label: "Price: 0-100,000"
+      }, {
+        // 10万円より高く20万円以下
+        minValue: 100001, maxValue: 200000,
+        symbol: { type: "simple-marker", size: 16, color: "green", outline: { color: "white", width: 0.5 } },
+        label: "Price: 100,001-200,000"
+      }, {
+        // 20万円より高く30万円以下
+        minValue: 200001, maxValue: 300000,
+        symbol: { type: "simple-marker", size: 24, color: "green", outline: { color: "white", width: 0.5 } },
+        label: "Price: 200,001-300,000"
+      }, {
+        // 30万円より高い
+        minValue: 300001, maxValue: 2840000, // 最大値はそれぞれのデータで調べて記述
+        symbol: { type: "simple-marker", size: 32, color: "green", outline: { color: "white", width: 0.5 } },
+        label: "Price: 300,001-"
+      }]
+    };
+
+    const landpriceLyr = new FeatureLayer({
+      url: "https://services.arcgis.com/wlVTGRSYTzAbjjiC/ArcGIS/rest/services/LandPrice/FeatureServer",
+      id: "landprice",
+      definitionExpression: "L01_022 = '13201'",
+      title: "八王子市の地価公示(FeatureLayer)",
+      // 上で定義したレンダラーを適用する
+      renderer: renderer,
+      // 背景が見やすくなるように透明度を設定 追加開始
+      opacity: 0.3
+      // 追加終了
+    });
+
+    const cityareaLyr = new FeatureLayer({
+      url: "https://services.arcgis.com/wlVTGRSYTzAbjjiC/arcgis/rest/services/municipalityboundaries2021/FeatureServer",
+      id: "cityarea",
+      title: "全国市区町村界(FeatureLayer)",
+      opacity: 0.5,
+      definitionExpression: "SIKUCHOSON = '八王子市'"
+    });
+
+    const mapElement = document.querySelector("arcgis-map");
+    await mapElement.viewOnReady();
+
+    mapElement.map.addMany([
+      cityareaLyr,
+      landpriceLyr
+    ]);
+
+    mapElement.whenLayerView(landpriceLyr)
+      .then(() => {
+        mapElement.goTo({
+          center: [139.32, 35.65],
+          zoom: 12
+        });
+      }).catch(() => {
+        console.error("MapView rejected:", err);
+      });
+  </script>
+</body>
+
+</html>

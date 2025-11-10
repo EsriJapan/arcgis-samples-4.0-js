@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="initial-scale=1, maximum-scale=1, user-scalable=no" />
+  <title>ArcGIS で始める Web マップアプリ開発　コンポーネント編 前半</title>
+
+  <style>
+    html,
+    body {
+      padding: 0;
+      margin: 0;
+      height: 100%;
+      width: 100%;
+    }
+  </style>
+  <!-- API キー認証を使用する場合、下記を利用してください -->
+  <!-- <script>
+    var esriConfig = { apiKey: "YOUR_ACCESS_TOKEN" };
+  </script> -->
+
+  <!-- Calcite Design System をロード -->
+  <script type="module" src="https://js.arcgis.com/calcite-components/3.2.1/calcite.esm.js"></script>
+
+  <!-- ArcGIS Maps SDK for JavaScript コア API をロード -->
+  <script src="https://js.arcgis.com/4.34/"></script>
+
+  <!-- マップ コンポーネントをロード -->
+  <script type="module" src="https://js.arcgis.com/4.34/map-components/"></script>
+
+</head>
+
+<body>
+  <arcgis-map basemap="topo-vector" center="138, 35.5" zoom="5">
+    <!-- <arcgis-map> タグ内に <arcgis-zoom> タグを記述 -->
+    <arcgis-zoom slot="top-left"></arcgis-zoom>
+    <!-- ここから <arcgis-expand> タグで囲む -->
+    <arcgis-expand expanded close-on-esc slot="top-left" mode="floating">
+      <!-- <arcgis-search> タグを記述 -->
+      <arcgis-search></arcgis-search>
+      <!-- <arcgis-basemap-gallery> タグを記述 -->
+      <arcgis-basemap-gallery></arcgis-basemap-gallery>
+    </arcgis-expand>
+    <!-- ここまで囲む -->
+    <!-- 3 つのタグを記述 -->
+    <arcgis-locate slot="top-left" scale="5000"></arcgis-locate>
+
+    <!-- ここから <arcgis-expand> タグで囲む -->
+    <arcgis-expand expanded close-on-esc slot="bottom-right" mode="floating">
+      <arcgis-legend></arcgis-legend>
+      <arcgis-bookmarks drag-enabled show-add-bookmark-button show-edit-bookmark-button></arcgis-bookmarks>
+    </arcgis-expand>
+    <!-- ここまで囲む -->
+  </arcgis-map>
+</body>
+
+</html>
