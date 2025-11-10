@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="initial-scale=1, maximum-scale=1, user-scalable=no" />
+  <title>ArcGIS で始める Web マップアプリ開発　レイヤー表示編</title>
+
+  <style>
+    html,
+    body {
+      padding: 0;
+      margin: 0;
+      height: 100%;
+      width: 100%;
+    }
+  </style>
+
+  <!-- API キー認証を使用する場合、下記を利用してください -->
+  <!-- <script>
+    var esriConfig = { apiKey: "YOUR_ACCESS_TOKEN" };
+  </script> -->
+
+  <!-- Calcite Design System をロード -->
+  <script type="module" src="https://js.arcgis.com/calcite-components/3.2.1/calcite.esm.js"></script>
+
+  <!-- ArcGIS Maps SDK for JavaScript コア API をロード -->
+  <script src="https://js.arcgis.com/4.34/"></script>
+
+  <!-- マップ コンポーネントをロード -->
+  <script type="module" src="https://js.arcgis.com/4.34/map-components/"></script>
+
+</head>
+
+<body>
+  <arcgis-map basemap="topo-vector" center="138, 35.5" zoom="5">
+    <!-- レイヤーリストの実装 追加開始 -->
+    <arcgis-layer-list slot="top-right"></arcgis-layer-list>
+    <!-- 追加終了 -->
+  </arcgis-map>
+
+  <!-- WebTileLayer と FeatureLayer のインスタンスを作成 -->
+  <script type="module">
+    const [WebTileLayer, FeatureLayer] = await $arcgis.import([
+      "@arcgis/core/layers/WebTileLayer",
+      "@arcgis/core/layers/FeatureLayer",
+    ]);
+
+    const gsipaleLyr = new WebTileLayer({
+      // urlTemplate を記述
+      urlTemplate: "https://cyberjapandata.gsi.go.jp/xyz/pale/{level}/{col}/{row}.png",
+      // その他プロパティを記述
+      id: "gsipale",
+      opacity: 0.9,
+      copyright: "地理院タイル（淡色地図）",
+      title: "地理院タイル-淡色地図(WebTileLayer)",
+      visible: false // デフォルトが非表示状態となるよう設定
+    });
+
+    const landpriceLyr = new FeatureLayer({
+      // url を記述
+      url: "https://services.arcgis.com/wlVTGRSYTzAbjjiC/ArcGIS/rest/services/LandPrice/FeatureServer",
+      // その他プロパティを記述
+      id: "landprice",
+      opacity: 0.8,
+      title: "八王子市の地価公示(FeatureLayer)",
+      // 八王子市のみを表示するよう行政区域コードのフィルターを定義
+      definitionExpression: "L01_022 = '13201'"
+    });
+
+    const cityareaLyr = new FeatureLayer({
+      // url を記述
+      url: "https://services.arcgis.com/wlVTGRSYTzAbjjiC/arcgis/rest/services/ZENKOKU_CITY_view/FeatureServer",
+      // その他プロパティを以下に記述
+      id: "cityarea",
+      title: "全国市区町村界(FeatureLayer)",
+      opacity: 0.5,
+      // landpriceLyr と同様にフィルターを定義
+      definitionExpression: "CITY = '八王子市'"
+    });
+
+    // マップにレイヤーを追加
+    const mapElement = document.querySelector("arcgis-map");
+    await mapElement.viewOnReady();
+
+    mapElement.map.addMany([gsipaleLyr, cityareaLyr, landpriceLyr]);
+
+    // 初期表示の設定
+    mapElement.whenLayerView(cityareaLyr) // gsipaleLyr, landpriceLyr でも可
+      .then(() => {
+        mapElement.goTo({
+          // レイヤー周辺の位置とズームレベルを指定
+          center: [139.32, 35.65],
+          zoom: 12
+        });
+      }).catch(() => {
+        console.error("MapView rejected:", err);
+      });
+  </script>
+</body>
+
+</html>
