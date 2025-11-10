@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="initial-scale=1, maximum-scale=1, user-scalable=no">
+  <title>タイトル未定（クエリ・属性検索）</title>
+
+  <style>
+    html,
+    body {
+      padding: 0;
+      margin: 0;
+      height: 100%;
+      width: 100%;
+    }
+
+    #controls {
+      top: 20px;
+      right: 20px;
+      position: absolute;
+      z-index: 99;
+      background-color: white;
+      border-radius: 8px;
+      padding: 10px;
+      opacity: 0.75;
+    }
+  </style>
+  <!-- API キー認証を使用する場合、下記を利用してください -->
+  <!-- <script>
+    var esriConfig = { apiKey: "YOUR_ACCESS_TOKEN" };
+  </script> -->
+
+  <!-- Calcite Design System をロード -->
+  <script type="module" src="https://js.arcgis.com/calcite-components/3.3.3/calcite.esm.js"></script>
+
+  <!-- ArcGIS Maps SDK for JavaScript コア API をロード -->
+  <script src="https://js.arcgis.com/4.34/"></script>
+
+  <!-- マップ コンポーネントをロード -->
+  <script type="module" src="https://js.arcgis.com/4.34/map-components/"></script>
+
+</head>
+
+<body>
+  <arcgis-map item-id="fb272eacd46046ed9b4e2371608ef32d">
+  </arcgis-map>
+  <div id="controls">
+    <div id="queryToggle">
+      <input type="text" value="" placeholder="八王子市" id="attrTxt" />
+      <input type="button" value="検索" id="queryButton" />
+      <input type="button" value="クリア" id="clearButton" />
+    </div>
+  </div>
+
+  <script type="module">
+
+    const mapElement = document.querySelector("arcgis-map");
+    await mapElement.viewOnReady();
+
+    let cityareaLyr;
+
+    mapElement.map.allLayers.forEach(layer => {
+      // レイヤー ID をもとに市区町村レイヤーを取得
+      if (layer.id === "1999e774d4c-layer-6") {
+        cityareaLyr = layer;
+      }
+    });
+
+    document.getElementById("queryButton").addEventListener("click", doQuery);
+
+    // クリア処理
+    document.getElementById("clearButton").onclick = () => {
+      // 入力値、クエリ結果を削除
+      mapElement.graphics.removeAll();
+      document.getElementById("resultText").innerHTML = "";
+      document.getElementById("attrTxt").value = "";
+    }
+
+    function doQuery() {
+
+      // 前回のクエリ結果を削除
+      mapElement.graphics.removeAll();
+
+      // input 要素に入力された文字列を取得
+      const str = document.getElementById("attrTxt").value;
+
+      // クエリ パラメーターの作成
+      const queryParams = cityareaLyr.createQuery();
+      queryParams.where = "SIKUCHOSON = '" + str + "'";
+      queryParams.returnGeometry = true;
+
+      // クエリの実行
+      cityareaLyr.queryFeatures(queryParams)
+        .then(showResult)
+        .catch(showErr);
+    }
+
+    function showResult(results) {
+      if (results.features.length > 0) {
+        // 結果フィーチャからグラフィックを作成
+        const graphics = results.features.map(feature => {
+          const graphic = feature.clone();
+          graphic.symbol = {
+            type: "simple-fill",
+            style: "none",
+            outline: {
+              color: "#00ffff",
+              width: "5px"
+            }
+          };
+          return graphic;
+        });
+        // グラフィックを表示
+        mapElement.graphics.addMany(graphics);
+        // グラフィックへズーム
+        mapElement.goTo(graphics);
+      }
+    }
+
+    // エラーの表示
+    function showErr(err) {
+      console.log(err);
+    }
+
+  </script>
+</body>
+
+</html>

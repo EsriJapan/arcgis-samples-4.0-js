@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="initial-scale=1,maximum-scale=1,user-scalable=no">
+  <title>タイトル未定（クエリ・空間検索）</title>
+
+  <style>
+    html,
+    body {
+      padding: 0;
+      margin: 0;
+      height: 100%;
+      width: 100%;
+    }
+
+    #controls {
+      top: 20px;
+      right: 20px;
+      position: absolute;
+      z-index: 99;
+      background-color: rgb(241, 240, 240);
+      border-radius: 8px;
+      padding: 10px;
+      opacity: 0.75;
+    }
+
+    #resultText {
+      font-weight: bold;
+      margin-left: 10px;
+    }
+  </style>
+  <!-- API キー認証を使用する場合、下記を利用してください -->
+  <!-- <script>
+    var esriConfig = { apiKey: "YOUR_ACCESS_TOKEN" };
+  </script> -->
+
+  <!-- Calcite Design System をロード -->
+  <script type="module" src="https://js.arcgis.com/calcite-components/3.3.3/calcite.esm.js"></script>
+
+  <!-- ArcGIS Maps SDK for JavaScript コア API をロード -->
+  <script src="https://js.arcgis.com/4.34/"></script>
+
+  <!-- マップ コンポーネントをロード -->
+  <script type="module" src="https://js.arcgis.com/4.34/map-components/"></script>
+
+</head>
+
+<body>
+  <arcgis-map item-id="fb272eacd46046ed9b4e2371608ef32d">
+  </arcgis-map>
+  <div id="controls">
+    <div id="queryToggle">
+      <input type="text" value="" placeholder="八王子市" id="attrTxt" />
+      <input type="button" value="検索" id="queryButton" />
+      <input type="button" value="クリア" id="clearButton" />
+    </div>
+    <div id="resultText"></div>
+  </div>
+
+  <script type="module">
+
+    const mapElement = document.querySelector("arcgis-map");
+    await mapElement.viewOnReady();
+
+    // 市区町村レイヤー、地価公示レイヤーを参照するための変数
+    let cityareaLyr, chikakojiLyr;
+
+    mapElement.map.allLayers.forEach((layer) => {
+      // レイヤー ID をもとにレイヤーを取得
+      if (layer.id === "1999e774d4c-layer-6") {
+        // 市区町村界レイヤー
+        cityareaLyr = layer;
+      } else if (layer.id === "1999e73db2f-layer-5") {
+        // 地価公示価格レイヤー
+        chikakojiLyr = layer;
+      }
+    });
+
+    // 検索イベントハンドラ
+    document.getElementById("queryButton").addEventListener("click", doQuery);
+
+    // クリア処理
+    document.getElementById("clearButton").onclick = () => {
+      // 入力値、クエリ結果を削除
+      mapElement.graphics.removeAll();
+      document.getElementById("resultText").innerHTML = "";
+      document.getElementById("attrTxt").value = "";
+    }
+
+    // クエリの実行
+    function doQuery() {
+
+      // 前回のクエリ結果を削除
+      mapElement.graphics.removeAll();
+
+      // input 要素に入力された文字列を取得
+      const str = document.getElementById("attrTxt").value;
+
+      // 市区町村のクエリ パラメーターの作成
+      const queryParams = cityareaLyr.createQuery();
+      queryParams.where = "SIKUCHOSON = '" + str + "'";
+      queryParams.returnGeometry = true;
+
+      // クエリの実行
+      cityareaLyr.queryFeatures(queryParams)
+        .then(showCityArea)
+        .then(queryChikakoji)
+        .then(showChikakoji)
+        .catch(showErr);
+    };
+
+    // 市区町村の表示
+    function showCityArea(results) {
+      // 結果フィーチャ数が 0 より大きいとき
+      if (results.features.length > 0) {
+        // 結果フィーチャからグラフィックを作成
+        const graphics = results.features.map(feature => {
+          feature.symbol = {
+            type: "simple-fill",
+            style: "none",
+            outline: {
+              color: "#00ffff",
+              width: "5px"
+            }
+          };
+          return feature;
+        });
+
+        // グラフィックを表示
+        mapElement.graphics.addMany(graphics);
+
+        // 空間検索で使用するためのフィーチャを返す
+        return results.features;
+      }
+    };
+
+    // 地価公示の取得
+    function queryChikakoji(features) {
+      // クエリ パラメータの作成
+      const queryParams = chikakojiLyr.createQuery();
+      queryParams.geometry = features[0].geometry;
+      queryParams.spatialRelationship = "contains";
+      queryParams.where = "1 = 1";
+      queryParams.returnGeometry = true;
+
+      // クエリの実行
+      return chikakojiLyr.queryFeatures(queryParams);
+    };
+
+    // クエリの結果を表示
+    function showChikakoji(results) {
+      // 結果フィーチャ数が 0 より大きいとき
+      if (results.features.length > 0) {
+        // 結果フィーチャからグラフィックを作成
+        const graphics = results.features.map(feature => {
+          feature.symbol = {
+            type: "simple-marker",
+            color: "#00ff80",
+            size: "12px"
+          };
+          return feature;
+        });
+        // グラフィックを表示
+        mapElement.graphics.addMany(graphics);
+        // グラフィックへズーム
+        mapElement.goTo(graphics);
+
+        // フィーチャ数の表示
+        const count = results.features.length;
+        document.getElementById("resultText").innerHTML = "地価公示地点" + count + "箇所";
+      }
+    };
+
+    // エラーの表示
+    function showErr(err) {
+      console.log(err);
+    };
+
+  </script>
+</body>
+
+</html>

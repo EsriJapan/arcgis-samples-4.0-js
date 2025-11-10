@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="initial-scale=1,maximum-scale=1,user-scalable=no">
+  <title>タイトル未定（グラフィック）</title>
+
+  <style>
+    html,
+    body {
+      padding: 0;
+      margin: 0;
+      height: 100%;
+      width: 100%;
+    }
+  </style>
+  <!-- API キー認証を使用する場合、下記を利用してください -->
+  <!-- <script>
+    var esriConfig = { apiKey: "YOUR_ACCESS_TOKEN" };
+  </script> -->
+
+  <!-- Calcite Design System をロード -->
+  <script type="module" src="https://js.arcgis.com/calcite-components/3.3.3/calcite.esm.js"></script>
+
+  <!-- ArcGIS Maps SDK for JavaScript コア API をロード -->
+  <script src="https://js.arcgis.com/4.34/"></script>
+
+  <!-- マップ コンポーネントをロード -->
+  <script type="module" src="https://js.arcgis.com/4.34/map-components/"></script>
+
+</head>
+
+<body>
+
+  <arcgis-map basemap="topo-vector" center="138, 35.5" zoom="5">
+  </arcgis-map>
+
+  <script type="module">
+    const [Graphic, GraphicsLayer] = await $arcgis.import([
+      "@arcgis/core/Graphic.js",
+      "@arcgis/core/layers/GraphicsLayer.js",
+    ]);
+
+    const mapElement = document.querySelector("arcgis-map");
+    await mapElement.viewOnReady();
+
+    const graphicsLayer = new GraphicsLayer();
+
+    mapElement.map.add(graphicsLayer);
+
+    // 緯度・経度座標でライン ジオメトリを作成
+    const polyline = {
+      type: "polyline",  // ポリラインに自動的に型変換
+      paths: [
+        [
+          142.70820654700003,
+          43.025899449000065
+        ],
+        [
+          142.71502962200009,
+          42.951703725000073
+        ],
+        [
+          142.71988747600005,
+          42.726739020000082
+        ],
+        [
+          142.9701758330001,
+          42.401820893000036
+        ],
+        [
+          143.21793175400001,
+          42.073811263000039
+        ]
+      ]
+    };
+
+    // 描画するシンプル ライン シンボルを定義
+    const lineSymbol = {
+      type: "simple-line",  // SimpleLineSymbol に自動的に型変換
+      color: [226, 119, 40],  // RGB カラーの値を配列として定義
+      width: 4
+    };
+
+    // ライン オブジェクトの属性を定義
+    const lineAtt = {
+      名称: "日高山脈",      // 山地・山脈名
+      備考: "北海道の背骨"   //  備考
+    };
+
+    // グラフィックを作成
+    const polylineGraphic = new Graphic({
+      geometry: polyline,
+      symbol: lineSymbol,
+      attributes: lineAtt,
+      popupTemplate: {
+        title: "{名称}",
+        content: [{
+          type: "fields",
+          fieldInfos: [{
+            fieldName: "名称"
+          }, {
+            fieldName: "備考"
+          }]
+        }]
+      }
+    });
+
+    // グラフィックをグラフィック レイヤーへ追加
+    graphicsLayer.add(polylineGraphic);
+
+  </script>
+</body>
+
+</html>

@@ -1,0 +1,110 @@
+<html>
+
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="initial-scale=1, maximum-scale=1, user-scalable=no" />
+  <title>タイトル：認証</title>
+
+  <style>
+    html,
+    body {
+      padding: 0;
+      margin: 0;
+      height: 100%;
+      width: 100%;
+    }
+
+    .action {
+      color: blue;
+      cursor: pointer;
+      text-decoration: underline;
+    }
+  </style>
+
+  <!-- Calcite Design System をロード -->
+  <script type="module" src="https://js.arcgis.com/calcite-components/3.3.3/calcite.esm.js"></script>
+
+  <!-- ArcGIS Maps SDK for JavaScript コア API をロード -->
+  <script src="https://js.arcgis.com/4.34/"></script>
+
+  <!-- マップ コンポーネントをロード -->
+  <script type="module" src="https://js.arcgis.com/4.34/map-components/"></script>
+
+</head>
+
+<body>
+  <div id="anonymousPanel" style="display: block; padding: 5px; text-align: center;">
+    <span id="sign-in" class="action">サイン イン</span>
+  </div>
+
+  <div id="personalizedPanel" style="display: none; padding: 5px; text-align: center;">
+    Welcome <span id="userId" style="font-weight: bold;"></span> &nbsp;-&nbsp;
+    <span id="sign-out" class="action">サイン アウト</span>
+  </div>
+
+  <arcgis-map basemap="topo-vector" center="139.74, 35.68" zoom="15">
+    <arcgis-expand expanded close-on-esc slot="top-left" mode="floating">
+      <arcgis-print></arcgis-print>
+      <arcgis-editor></arcgis-editor>
+    </arcgis-expand>
+    <arcgis-sketch slot="bottom-right" creation-mode="update" layout="horizontal"></arcgis-sketch>
+  </arcgis-map>
+
+  <script type="module">
+    const [FeatureLayer, Portal, OAuthInfo, esriId] = await $arcgis.import([
+      "@arcgis/core/layers/FeatureLayer.js",
+      "@arcgis/core/portal/Portal.js",
+      "@arcgis/core/identity/OAuthInfo.js",
+      "@arcgis/core/identity/IdentityManager.js",
+    ]);
+
+    const mapElement = document.querySelector("arcgis-map");
+    await mapElement.viewOnReady();
+
+    // ポータルのURL
+    const portalUrl = "https://www.arcgis.com";
+
+    const info = new OAuthInfo({
+      appId: "xxxx", //Client ID を入力してください  
+      popup: false,
+    });
+
+    // 認証情報を登録
+    esriId.registerOAuthInfos([info]);
+
+    // ArcGIS にサイン イン
+    document.getElementById('sign-in').addEventListener('click', () => {
+      esriId.getCredential(portalUrl);
+    }, false);
+
+    // サイン アウト
+    document.getElementById('sign-out').addEventListener('click', () => {
+      esriId.destroyCredentials();
+      window.location.reload();
+    });
+
+    // 認証に成功した場合にレイヤーを追加
+    esriId.checkSignInStatus(portalUrl).then(() => {
+      document.getElementById('anonymousPanel').style.display = 'none';
+      document.getElementById('personalizedPanel').style.display = 'block';
+      adddemoLyr();
+    });
+
+    // アプリの表示
+    function adddemoLyr() {
+      const portal = new Portal();
+
+      // ポータルの読み込み
+      portal.load().then(() => {
+        const demoLyr = new FeatureLayer({
+          portalItem: {
+            id: "bcbc7432216446cd9a38f6e48324544c"
+          }
+        });
+        mapElement.map.add(demoLyr);
+      });
+    };
+  </script>
+</body>
+
+</html>
