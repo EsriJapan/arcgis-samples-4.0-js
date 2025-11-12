@@ -4,7 +4,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="initial-scale=1,maximum-scale=1,user-scalable=no">
-  <title>タイトル未定（クエリ・空間検索）</title>
+  <title>ArcGIS で始める Web マップ アプリ開発 クエリー編（空間検索）</title>
 
   <style>
     html,
@@ -81,7 +81,7 @@
     // 検索イベントハンドラ
     document.getElementById("queryButton").addEventListener("click", doQuery);
 
-    // クリア処理
+    // 初期化処理
     document.getElementById("clearButton").onclick = () => {
       // 入力値、クエリ結果を削除
       mapElement.graphics.removeAll();
@@ -89,10 +89,10 @@
       document.getElementById("attrTxt").value = "";
     }
 
-    // クエリの実行
+    // クエリーの実行
     function doQuery() {
 
-      // 前回のクエリ結果を削除
+      // 前回のクエリー結果を削除
       mapElement.graphics.removeAll();
 
       // input 要素に入力された文字列を取得
@@ -103,7 +103,7 @@
       queryParams.where = "SIKUCHOSON = '" + str + "'";
       queryParams.returnGeometry = true;
 
-      // クエリの実行
+      // クエリーの実行
       cityareaLyr.queryFeatures(queryParams)
         .then(showCityArea)
         .then(queryChikakoji)
@@ -138,18 +138,18 @@
 
     // 地価公示の取得
     function queryChikakoji(features) {
-      // クエリ パラメータの作成
+      // クエリー パラメータの作成
       const queryParams = chikakojiLyr.createQuery();
       queryParams.geometry = features[0].geometry;
       queryParams.spatialRelationship = "contains";
       queryParams.where = "1 = 1";
       queryParams.returnGeometry = true;
 
-      // クエリの実行
+      // クエリーの実行
       return chikakojiLyr.queryFeatures(queryParams);
     };
 
-    // クエリの結果を表示
+    // クエリーの結果を表示
     function showChikakoji(results) {
       // 結果フィーチャ数が 0 より大きいとき
       if (results.features.length > 0) {

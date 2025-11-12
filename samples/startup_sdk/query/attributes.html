@@ -3,8 +3,8 @@
 
 <head>
   <meta charset="utf-8">
-  <meta name="viewport" content="initial-scale=1, maximum-scale=1, user-scalable=no">
-  <title>タイトル未定（クエリ・属性検索）</title>
+  <meta name="viewport" content="initial-scale=1,maximum-scale=1, user-scalable=no">
+  <title>ArcGIS で始める Web マップ アプリ開発 クエリー編（属性検索）</title>
 
   <style>
     html,
@@ -100,8 +100,7 @@
       if (results.features.length > 0) {
         // 結果フィーチャからグラフィックを作成
         const graphics = results.features.map(feature => {
-          const graphic = feature.clone();
-          graphic.symbol = {
+          feature.symbol = {
             type: "simple-fill",
             style: "none",
             outline: {
@@ -109,7 +108,7 @@
               width: "5px"
             }
           };
-          return graphic;
+          return feature;
         });
         // グラフィックを表示
         mapElement.graphics.addMany(graphics);
