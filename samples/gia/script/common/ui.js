@@ -1,3 +1,5 @@
+import designChange from "../designChange.js";
+
 const mapEl = document.querySelector("arcgis-map");
 const sceneEl = document.getElementById("sceneEl");
 const startShellPanel = document.getElementById("shell-panel-start");
@@ -5,7 +7,6 @@ const endShellPanel = document.getElementById("shell-panel-end");
 const styleButton = document.getElementById("style-button");
 const mapSceneButton = document.getElementById("mapScene-button");
 const headerImage = document.getElementById("header-title");
-const bmg = document.querySelector("arcgis-basemap-gallery");
 
 let activeWidgetList = {
     left: null,
@@ -108,11 +109,13 @@ function changeMapMode() {
         mapSceneButton.innerText = "シーン";
         mapEl.style.display = "none";
         sceneEl.style.display = "block";
+        designChange(sceneEl);
     } else {
         mapSceneButton.iconStart = "2d";
         mapSceneButton.innerText = "マップ";
         sceneEl.style.display = "none";
         mapEl.style.display = "block";
+        designChange(mapEl);
     }
 }
 

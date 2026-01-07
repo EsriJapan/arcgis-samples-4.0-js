@@ -22,9 +22,13 @@
     <calcite-shell>
         <!-- ヘッダー -->
         <calcite-navigation slot="header">
-            <calcite-navigation-logo id="header-title" heading-level="1" slot="logo" heading="ArcGIS × 地理院地図 Vector Viewer"
-                thumbnail="./images/ej-logo-light.svg">
+            <calcite-navigation-logo id="header-title" heading-level="1" slot="logo"
+                heading="ArcGIS × 地理院地図 Vector Viewer" thumbnail="./images/ej-logo-light.svg">
             </calcite-navigation-logo>
+            <calcite-label slot="content-end" layout="inline" style="display: none;" id="userField">
+                <calcite-avatar full-name="" scale="l"></calcite-avatar>
+                <calcite-tile heading="" description="" scale="l"></calcite-tile>
+            </calcite-label>
             <calcite-fab kind="natural" scale="l" class="header-end" icon="hamburger" class="fab-icon" id="menu-fab"
                 slot="content-end"></calcite-fab>
         </calcite-navigation>
@@ -32,6 +36,8 @@
         <!-- メニュー用シート -->
         <calcite-sheet label="メニュー" id="menu-sheet" position="inline-end">
             <calcite-panel closable heading="メニュー" id="menu-panel">
+                <calcite-button id="auth-button" appearance="outline" icon-flip-rtl="start" icon-start="sign-in"
+                    scale="l" width="full">サイン イン</calcite-button>
                 <calcite-accordion>
                     <calcite-accordion-item expanded description="アプリの明暗スタイルのモードをボタンで切り替えます。" heading="アプリ スタイル切り替え"
                         icon-start="contrast">

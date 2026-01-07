@@ -1,5 +1,6 @@
 import designChange from "./designChange.js";
 import displayChangeElem from "./displayChangeElem.js";
+import authorization from "./common/authorization.js";
 // 地理院地図のベクタータイル情報のオブジェクトの配列を設定
 const gsis = [
     {
@@ -67,7 +68,7 @@ const coordsSceneWidget = document.getElementById("coordsSceneWidget")
 function showMapCoordinates(pt) {
     let coords = "Center Lat/Lon " + pt.latitude.toFixed(3) + " " + pt.longitude.toFixed(3) +
         " | Scale 1:" + Math.round(mapEl.view.scale * 1) / 1 +
-        " | Zoom " + mapEl.view.zoom;
+        " | Zoom " + Math.floor(mapEl.view.zoom);
     coordsWidget.innerHTML = coords;
 }
 
@@ -113,6 +114,7 @@ const polygonFlowItem = document.querySelector(`[data-flow-item-id="polygon"]`)
 mapEl.constraints = {
     minZoom: 4,  // 最小ズームレベル
     maxZoom: 18, // 最大ズームレベル
+    snapToZoom: false,
     geometry: {
         type: "extent",
         xmin: 122.93, // 西端 与那国島付近
@@ -165,9 +167,22 @@ bmg.source = lbs;
 // マップにローカル ベースマップ ソースに設定した先頭のベースマップを設定
 mapEl.basemap = lbs.basemaps.getItemAt(0);
 sceneEl.basemap = lbs.basemaps.getItemAt(0);
+const mapSceneButton = document.getElementById("mapScene-button");
 
 bmg.addEventListener("arcgisPropertyChange", event => {
     if (event.detail.name === "activeBasemap") {
-        designChange(mapEl);
+        designChange(mapSceneButton.iconStart == "2d" ? mapEl : sceneEl);
     }
+});
+
+// サインイン処理
+const authButton = document.getElementById("auth-button");
+const menuSheet =  document.getElementById("menu-sheet");
+/**
+ * サインイン
+ */
+authButton.addEventListener("click", () => {
+    authorization().finally(() => {
+        menuSheet.open = false;
+    });
 });

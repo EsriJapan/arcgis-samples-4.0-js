@@ -189,7 +189,6 @@ function creatFlow(event, elem) {
 function setPropertyFields(lyrId, block1, block2) {
     const obj = vl.getStyleLayer(lyrId);
     if (obj.type == "symbol") {
-        console.log("point obj", obj)
         setMultiPatternElem(obj, lyrId, block2, "icon-size", "アイコンの倍率", false, "layout", ["ズーム", "倍率"]);
         const ipaOpt = [
             { auto: "自動" },
@@ -254,7 +253,6 @@ function setPropertyFields(lyrId, block1, block2) {
             setSelectElem(obj, lyrId, block2, "text-anchor", "テキストの表示位置", iaOpt, "layout");
         }
     } else if (obj.type == "line") {
-        console.log("line obj", obj)
         setColorPicker(obj, lyrId, block1, "line-color", "");
         setNumElem(obj, lyrId, block1, "line-width", "ラインの幅", false, "paint");
         const capOpt = [
@@ -275,7 +273,6 @@ function setPropertyFields(lyrId, block1, block2) {
         setSelectElem(obj, lyrId, block2, "line-join", "線の接続部の形状", olOpt, "layout");
         setNumArrayText(obj, lyrId, block1, "line-dasharray", "線の破線", "paint");
     } else if (obj.type == "fill") {
-        console.log("polygon obj", obj)
         block2.style.display = "none"
         setColorPicker(obj, lyrId, block1, "fill-color", "塗りつぶしの")
     }
@@ -420,7 +417,6 @@ function setMultiNumTable(obj, lyrId, block, propName, discription, intFlg, pain
                     const setProp = obj[paintLayout];
                     const rowNum = event.target.rowNum;
                     setProp[propName].stops[rowNum][1] = Number(event.target.value);
-                    console.log("setProp", setProp)
                     if (paintLayout == "paint") {
                         changePaintVisualization(lyrId, setProp)
                     } else {
@@ -483,13 +479,11 @@ function inputRestrictions(inputValue) {
 }
 
 function changePaintVisualization(lyrId, paint) {
-    console.log("paint", paint)
     vl.setPaintProperties(lyrId, paint)
     vl.refresh();
 }
 
 function changeLayoutVisualization(lyrId, layout) {
-    console.log("layout", layout)
     vl.setLayoutProperties(lyrId, layout);
     vl.refresh();
 }
