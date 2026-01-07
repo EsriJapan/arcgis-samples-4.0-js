@@ -1,0 +1,133 @@
+<!doctype html>
+<html lang="ja">
+
+<head>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
+    <meta name="viewport" content="initial-scale=1,maximum-scale=1,user-scalable=no" />
+    <title>ArcGIS × 地理院地図 Vector Viewer</title>
+
+    <script type="module" src="https://js.arcgis.com/calcite-components/3.3.3/calcite.esm.js"></script>
+
+    <script src="https://js.arcgis.com/4.34/"></script>
+
+    <script type="module" src="https://js.arcgis.com/4.34/map-components/"></script>
+
+    <link rel="stylesheet" href="./style/main.css" />
+
+</head>
+
+<body>
+    <calcite-scrim></calcite-scrim>
+    <calcite-shell>
+        <!-- ヘッダー -->
+        <calcite-navigation slot="header">
+            <calcite-navigation-logo id="header-title" heading-level="1" slot="logo" heading="ArcGIS × 地理院地図 Vector Viewer"
+                thumbnail="./images/ej-logo-light.svg">
+            </calcite-navigation-logo>
+            <calcite-fab kind="natural" scale="l" class="header-end" icon="hamburger" class="fab-icon" id="menu-fab"
+                slot="content-end"></calcite-fab>
+        </calcite-navigation>
+
+        <!-- メニュー用シート -->
+        <calcite-sheet label="メニュー" id="menu-sheet" position="inline-end">
+            <calcite-panel closable heading="メニュー" id="menu-panel">
+                <calcite-accordion>
+                    <calcite-accordion-item expanded description="アプリの明暗スタイルのモードをボタンで切り替えます。" heading="アプリ スタイル切り替え"
+                        icon-start="contrast">
+                        <calcite-button id="style-button" icon-start="brightness" width="full" kind="neutral"
+                            scale="l">ライト
+                            モード</calcite-button>
+                    </calcite-accordion-item>
+                </calcite-accordion><calcite-accordion>
+                    <calcite-accordion-item expanded description="マップの 2D / 3D のモードをボタンで切り替えます。" heading="マップ スタイル切り替え"
+                        icon-start="map">
+                        <calcite-button id="mapScene-button" icon-start="2d" width="full" kind="neutral"
+                            scale="l">マップ</calcite-button>
+                    </calcite-accordion-item>
+                </calcite-accordion>
+            </calcite-panel>
+        </calcite-sheet>
+
+        <!-- 左サイド パネル -->
+        <calcite-shell-panel slot="panel-start" position="start" id="shell-panel-start" display-mode="float-content"
+            collapsed>
+            <calcite-action-bar slot="action-bar" id="left-action-bar">
+                <calcite-action data-action-id="point" icon="pin-tear" text="ポイント"></calcite-action>
+                <calcite-action data-action-id="line" icon="curve" text="ライン"></calcite-action>
+                <calcite-action data-action-id="polygon" icon="polygon-area" text="ポリゴン"></calcite-action>
+            </calcite-action-bar>
+            <calcite-panel heading="ポイント" data-panel-id="point" closable closed>
+                <calcite-flow data-flow-id="point">
+                    <calcite-flow-item data-flow-item-id="point">
+
+                    </calcite-flow-item>
+                </calcite-flow>
+            </calcite-panel>
+            <calcite-panel heading="ライン" data-panel-id="line" closable closed>
+                <calcite-flow data-flow-id="line">
+                    <calcite-flow-item data-flow-item-id="line">
+
+                    </calcite-flow-item>
+                </calcite-flow>
+            </calcite-panel>
+            <calcite-panel heading="ポリゴン" data-panel-id="polygon" closable closed>
+                <calcite-flow data-flow-id="polygon">
+                    <calcite-flow-item data-flow-item-id="polygon">
+
+                    </calcite-flow-item>
+                </calcite-flow>
+            </calcite-panel>
+        </calcite-shell-panel>
+
+        <!-- 右サイド パネル -->
+        <calcite-shell-panel slot="panel-end" position="end" id="shell-panel-end" display-mode="float-content"
+            collapsed>
+            <calcite-action-bar slot="action-bar" id="right-action-bar">
+                <calcite-action data-action-id="basemap-gallery" text="ベースマップ ギャラリー" icon="basemap"></calcite-action>
+                <calcite-action data-action-id="print" icon="print" text="印刷"></calcite-action>
+            </calcite-action-bar>
+            <calcite-panel heading="ベースマップ ギャラリー" data-panel-id="basemap-gallery" closable closed>
+                <arcgis-basemap-gallery reference-element="mapEl"></arcgis-basemap-gallery>
+            </calcite-panel>
+            <calcite-panel heading="印刷" data-panel-id="print" closable closed>
+                <arcgis-print reference-element="mapEl"></arcgis-print>
+            </calcite-panel>
+        </calcite-shell-panel>
+
+        <!-- 中央コンテント パネル（マップ エリア） -->
+        <calcite-panel>
+            <arcgis-map zoom="4" center="138, 36" id="mapEl" style="display: block;">
+                <arcgis-zoom slot="top-left"></arcgis-zoom>
+                <arcgis-home slot="top-left"></arcgis-home>
+                <arcgis-locate slot="top-left" scale="5000"></arcgis-locate>
+                <arcgis-compass slot="top-left"></arcgis-compass>
+                <arcgis-scale-bar slot="bottom-left" bar-style="ruler" unit="metric"></arcgis-scale-bar>
+                <arcgis-expand slot="top-right" mode="floating">
+                    <arcgis-search></arcgis-search>
+                </arcgis-expand>
+                <div slot="bottom-right" id="coordsWidget" class="esri-widget esri-component custom-coords-widget">
+                </div>
+            </arcgis-map>
+            <arcgis-scene id="sceneEl" style="display: none;" viewing-mode="local" ground="world-elevation"
+                camera-position="138, 36, 5000000" camera-tilt="0">
+                <arcgis-zoom slot="top-left"></arcgis-zoom>
+                <arcgis-home slot="top-left"></arcgis-home>
+                <arcgis-locate slot="top-left" scale="5000"></arcgis-locate>
+                <arcgis-compass slot="top-left"></arcgis-compass>
+                <arcgis-scale-bar slot="bottom-left" bar-style="ruler" unit="metric"></arcgis-scale-bar>
+                <arcgis-expand slot="top-right" mode="floating">
+                    <arcgis-search></arcgis-search>
+                </arcgis-expand>
+                <div slot="bottom-right" id="coordsSceneWidget" class="esri-widget esri-component custom-coords-widget">
+                </div>
+            </arcgis-scene>
+        </calcite-panel>
+    </calcite-shell>
+
+    <script type="module" src="./script/common/ui.js"></script>
+    <script src="./script/init.js" type="module"></script>
+    <script src="./script/common/linked.js" type="module"></script>
+</body>
+
+</html>

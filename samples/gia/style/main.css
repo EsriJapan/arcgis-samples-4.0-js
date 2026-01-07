@@ -1,0 +1,68 @@
+html,
+body,
+#mapEl,
+calcite-shell,
+calcite-shell-panell,
+calcite-panel,
+calcite-sheet  {
+    padding: 0;
+    margin: 0;
+    height: 100%;
+    width: 100%;
+    display: flex;
+}
+
+.custom-coords-widget {
+    padding: 2px 15px 2px;
+    font-weight: bolder;
+    background-color: lightgrey;
+    color: #343434;
+}
+
+.header-end {
+    padding-right: 15px;
+}
+
+.blockDiv {
+    display: block;
+    background-color: transparent;
+    padding-bottom: 10px;
+    text-align: center;
+}
+
+.noneDiv {
+    display: none;
+}
+
+.layer-icon {
+    text-align: center;
+    width: 100%;
+    height: 100px;
+}
+
+calcite-text-area {
+    --calcite-text-area-border-color: transparent;
+}
+
+.add-layer {
+    height: 40px;
+}
+
+#loginUser {
+    --calcite-tile-border-color: transparent;
+    --calcite-tile-background-color: transparent;
+}
+
+#avatar {
+    padding-top: 7px;
+}
+
+.selDiv {
+    width: 100%;
+}
+
+.result-area {
+    width: 100%;
+    height: 100vh;
+    overflow-y: auto;
+}
