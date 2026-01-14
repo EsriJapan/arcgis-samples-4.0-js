@@ -66,3 +66,84 @@ calcite-tile {
     --calcite-tile-border-color: transparent;
     --calcite-tile-background-color: transparent;
 }
+
+calcite-card.tip {
+    margin: 1rem;
+}
+
+calcite-card.tip span[slot=description] {
+    padding: .5rem;
+    font-size: 14px
+}
+
+.text-center {
+    text-align: center;
+    vertical-align: middle;
+}
+
+.esri-icon-layers.esri-layers-list {
+    font-size: 32px;
+    margin: 0 auto;
+    line-height: 64px;
+    width: 32px;
+    height: 64px;
+    background-color: transparent
+}
+
+.select-area-div {
+    padding-top: 10px;
+    height: 50px;
+}
+
+.layer-list-area {
+    position: relative;
+    overflow-y: auto;
+    height: 100%;
+}
+
+figure {
+    display: block;
+    margin-block-start: 1em;
+    margin-block-end: 1em;
+    margin-inline-start: 40px;
+    margin-inline-end: 40px;
+    unicode-bidi: isolate;
+}
+
+.item-browser-card__thumbnail {
+    margin: 0px;
+    box-sizing: content-box;
+    width: 5rem;
+    padding: 0px;
+    padding-inline-start: 2rem;
+    flex: 0 0 auto;
+}
+
+.item-browser-card--xs .item-browser-card__thumbnail {
+    width: 3rem;
+    padding-inline-start: 0.5rem;
+}
+
+.thumbnail {
+    height: 100%;
+    width: 100%;
+    object-fit: cover;
+    padding-top: 15px;
+    opacity: 1;
+    transition: opacity 300ms linear;
+}
+
+.card-content {
+    width: 12rem;
+    overflow-wrap: break-word;
+    white-space: normal;
+}
+
+.card-bottom {
+    height: 50px;
+    align-items:flex-end
+}
+
+.inLabel {
+    --calcite-label-margin-bottom: 0;
+}

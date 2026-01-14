@@ -1,4 +1,5 @@
 import designChange from "../designChange.js";
+import managedLayers from "../managedLayers.js";
 
 const mapEl = document.querySelector("arcgis-map");
 const sceneEl = document.getElementById("sceneEl");
@@ -7,6 +8,8 @@ const endShellPanel = document.getElementById("shell-panel-end");
 const styleButton = document.getElementById("style-button");
 const mapSceneButton = document.getElementById("mapScene-button");
 const headerImage = document.getElementById("header-title");
+const addLayerBtn = document.getElementById("add-layer");
+const layerList = document.querySelector("arcgis-layer-list")
 
 let activeWidgetList = {
     left: null,
@@ -18,20 +21,35 @@ let clickExpand = false;
 const handleActionBarClick = ({ target }) => {
 
     const parent = target.parentElement;
+    let shellPanel, activeWidget, targetShell, itemName;
+    if (parent.id == "left-action-bar") {
+        targetShell = "left";
+        itemName = "flow"
+    } else if (parent.id == "right-action-bar") {
+        targetShell = "rigth";
+        itemName = "panel"
+    }
+
     if (target.tagName !== "CALCITE-ACTION") {
         if (!clickExpand) {
-            if (target.id == "left-action-bar") {
+            if (targetShell == "left") {
                 startShellPanel.collapsed = true;
                 if (activeWidgetList.left) {
                     document.querySelector(`[data-action-id=${activeWidgetList.left}]`).active = false;
-                    document.querySelector(`[data-panel-id=${activeWidgetList.left}]`).closed = true
+                    let flowElem = document.querySelector(`[data-${itemName}-id=${activeWidgetList.left}]`);
+                    for (let idx = 1; idx < flowElem.childNodes.length; idx++) {
+                        if (flowElem.firstElementChild !== flowElem.lastElementChild) {
+                            flowElem.removeChild(flowElem.lastElementChild);
+                        }
+                    }
+                    flowElem.firstElementChild.closed = true;
                     activeWidgetList.left = null;
                 }
-            } else if (target.id == "right-action-bar") {
+            } else if (targetShell == "right") {
                 endShellPanel.collapsed = true;
                 if (activeWidgetList.right) {
                     document.querySelector(`[data-action-id=${activeWidgetList.right}]`).active = false;
-                    document.querySelector(`[data-panel-id=${activeWidgetList.right}]`).closed = true
+                    document.querySelector(`[data-${itemName}-id=${activeWidgetList.right}]`).closed = true
                     activeWidgetList.right = null;
                 }
             }
@@ -40,42 +58,54 @@ const handleActionBarClick = ({ target }) => {
         return;
     }
 
-    let shellPanel, activeWidget, targetShell;
-    if (parent.id == "left-action-bar") {
+    if (targetShell == "left") {
         shellPanel = startShellPanel;
         activeWidget = activeWidgetList.left;
-        targetShell = "left";
-    } else if (parent.id == "right-action-bar") {
+    } else if (targetShell == "rigth") {
         shellPanel = endShellPanel;
         activeWidget = activeWidgetList.right;
-        targetShell = "rigth";
     }
-
     shellPanel.collapsed = false;
+    let activeElem = document.querySelector(`[data-${itemName}-id=${activeWidget}]`);
     if (activeWidget) {
         document.querySelector(`[data-action-id=${activeWidget}]`).active = false;
-        document.querySelector(`[data-panel-id=${activeWidget}]`).closed = true;
+        if (targetShell == "left") {
+            for (let idx = 1; idx < activeElem.childNodes.length; idx++) {
+                if (activeElem.firstElementChild !== activeElem.lastElementChild) {
+                    activeElem.removeChild(activeElem.lastElementChild);
+                }
+            }
+            activeElem.firstElementChild.closed = true;
+        } else {
+            activeElem.closed = true;
+        }
     }
 
     const nextWidget = target.dataset.actionId;
+    const itemElem = document.querySelector(`[data-${itemName}-id=${nextWidget}]`);
     if (nextWidget !== activeWidget) {
         document.querySelector(`[data-action-id=${nextWidget}]`).active = true;
-        document.querySelector(`[data-panel-id=${nextWidget}]`).closed = false;
+        let addEveElem;
         if (targetShell == "left") {
             activeWidgetList.left = nextWidget;
+            itemElem.firstElementChild.closed = false;
+            addEveElem = itemElem.firstElementChild;
         } else {
             activeWidgetList.right = nextWidget;
+            itemElem.closed = false;
+            addEveElem = itemElem;
         }
-        document.querySelector(`[data-panel-id=${nextWidget}]`).addEventListener("calcitePanelClose", ({ target }) => {
+        addEveElem.addEventListener(itemName == "panel" ? "calcitePanelClose" : "calciteFlowItemClose", ({ target }) => {
             const parent = target.parentElement;
             clickExpand = false;
             shellPanel.collapsed = true;
-            if (parent.id == "shell-panel-start") {
+            if (targetShell == "left") {
+                document.querySelector(`[data-action-id=${activeWidgetList.left}]`).active = false;
                 activeWidgetList.left = null;
             } else if (parent.id == "shell-panel-end") {
+                document.querySelector(`[data-action-id=${activeWidgetList.right}]`).active = false;
                 activeWidgetList.right = null;
             }
-
         })
     } else {
         if (targetShell == "left") {
@@ -102,19 +132,24 @@ function changeStyleMode() {
     }
 }
 
+const printPanelItem = document.querySelector(`[data-action-id="print"]`)
 // アプリのスタイルを変更をする処理
 function changeMapMode() {
     if (mapSceneButton.iconStart == "2d") {
         mapSceneButton.iconStart = "3d";
         mapSceneButton.innerText = "シーン";
+        printPanelItem.style.display = "none";
         mapEl.style.display = "none";
         sceneEl.style.display = "block";
+        layerList.referenceElement = "sceneEl"
         designChange(sceneEl);
     } else {
         mapSceneButton.iconStart = "2d";
         mapSceneButton.innerText = "マップ";
+        printPanelItem.style.display = "block";
         sceneEl.style.display = "none";
         mapEl.style.display = "block";
+        layerList.referenceElement = "mapEl"
         designChange(mapEl);
     }
 }
@@ -144,3 +179,5 @@ styleButton.addEventListener("click", changeStyleMode);
 
 // マップのスタイル変更ボタンがクリックされた時のイベントを設定
 mapSceneButton.addEventListener("click", changeMapMode);
+
+addLayerBtn.addEventListener("click", managedLayers);

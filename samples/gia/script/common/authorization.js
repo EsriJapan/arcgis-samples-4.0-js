@@ -6,6 +6,7 @@ export default async function authorization() {
     const userField = document.getElementById("userField");
     const avatar = document.querySelector("calcite-avatar");
     const tile = document.querySelector("calcite-tile");
+    const layerActionBtn = document.querySelector(`[data-action-id="layer"]`)
     const [
         esriId,
         OAuthInfo,
@@ -34,7 +35,10 @@ export default async function authorization() {
         avatar.fullName = "";
         tile.heading = "";
         tile.description = "";
+        mapEl.map.removeAll();
+        sceneEl.map.removeAll();
         userField.style.display = "none";
+        layerActionBtn.style.display = "none";
         displayAlert("success", "サイン アウト完了", "サイン アウトしました。");
     }).catch(error => {
         esriId.getCredential("https://www.arcgis.com", { oAuthPopupConfirmation: false }).then(result => {
@@ -47,7 +51,7 @@ export default async function authorization() {
                 authButton.icon = "sign-out";
                 authButton.innerText = "サイン アウト";
                 displayAlert("success", "サインイン完了", "サインインに成功しました。");
-                displayAlert();
+                layerActionBtn.style.display = "block";
 
                 portal.load().then(function () {
                     avatar.fullName = portal.user.fullName;
@@ -58,7 +62,7 @@ export default async function authorization() {
                 });
             }
         }).catch(error => {
-            console.log("error",error)
+            console.log("error", error)
             displayAlert("warning", "サインイン エラー", "サインインに失敗しました。");
         }).finally(() => {
             return;

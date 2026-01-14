@@ -45,12 +45,18 @@ const [
     VectorTileLayer,
     Basemap,
     LocalBasemapsSource,
-    WebTileLayer
+    WebTileLayer,
+    reactiveUtils,
+    Collection,
+    ActionButton,
 ] = await $arcgis.import([
     "@arcgis/core/layers/VectorTileLayer.js",
     "@arcgis/core/Basemap.js",
     "@arcgis/core/widgets/BasemapGallery/support/LocalBasemapsSource.js",
-    "@arcgis/core/layers/WebTileLayer.js"
+    "@arcgis/core/layers/WebTileLayer.js",
+    "@arcgis/core/core/reactiveUtils.js",
+    "@arcgis/core/core/Collection.js",
+    "@arcgis/core/support/actions/ActionButton.js"
 ]);
 
 // arcgis-map のコンポーネントを取得とコンポーネントの準備を待つ
@@ -81,9 +87,8 @@ function showSceneCoordinates(pt) {
 
 mapEl.addEventListener("arcgisViewReadyChange", () => {
     mapEl.style.display = "none";
-    mapEl.view.watch(["stationary"], function (event) {
+    reactiveUtils.watch(() => mapEl.view.stationary, function (event) {
         showMapCoordinates(mapEl.view.center);
-
         if ((pointFlowItem.children.length > 0 ||
             lineFlowItem.children.length > 0 ||
             polygonFlowItem.children.length > 0) &&
@@ -93,12 +98,27 @@ mapEl.addEventListener("arcgisViewReadyChange", () => {
             displayChangeElem(mapEl, polygonFlowItem);
         }
     });
+
+    reactiveUtils.watch(() => mapEl.map.layers.length, function (event) {
+        const iconDiv = document.getElementById("layer-icon");
+        const nonLyrCrd = document.getElementById("non-layer-card");
+        const layerView = document.getElementById("layer-list");
+        if (mapEl.map.layers.length > 0) {
+            iconDiv.style.display = "none";
+            nonLyrCrd.style.display = "none";
+            layerView.style.display = "block";
+        } else {
+            iconDiv.style.display = "block";
+            nonLyrCrd.style.display = "block";
+            layerView.style.display = "none";
+        }
+    });
     sceneEl.style.display = "block";
     sceneEl.addEventListener("arcgisViewReadyChange", () => {
         mapEl.style.display = "block";
-        sceneEl.view.watch(["stationary"], function (event) {
+        reactiveUtils.watch(() => sceneEl.view.stationary, function (event) {
             showSceneCoordinates(sceneEl.view.center);
-        });
+        })
         sceneEl.style.display = "none";
         scrim.remove();
         loader.remove();
@@ -186,3 +206,45 @@ authButton.addEventListener("click", () => {
         menuSheet.open = false;
     });
 });
+
+// レイヤー リスト オプション処理
+const layerList = document.querySelector("arcgis-layer-list");
+layerList.listItemCreatedFunction = (event) => {
+    const { item } = event;
+    const delTargetArray = ["feature", "group", "subtype-group"]
+    if (delTargetArray.includes(item.layer.type)) {
+        item.actionsSections = new Collection([
+            new Collection([
+                new ActionButton({
+                    title: "レイヤーにズーム",
+                    icon: "zoom-out-fixed",
+                    id: "full-extent"
+                }),
+                new ActionButton({
+                    title: "レイヤーの削除",
+                    icon: "trash",
+                    id: "trash"
+                })
+            ])
+        ])
+    }
+}
+
+layerList.addEventListener("arcgisTriggerAction", async event => {
+    let act = event.detail.action;
+    let lyr = event.detail.item.layer;
+    if (act.id == "full-extent") {
+        await mapEl.goTo(lyr.fullExtent)
+    } else if (act.id == "trash") {
+        if (lyr.parent) {
+            lyr.parent.layers.items.forEach(element => {
+                if (element.title == lyr.title) {
+                    lyr.parent.remove(element);
+                }
+            });
+        } else {
+            mapEl.map.remove(lyr);
+            sceneEl.map.remove(lyr);
+        }
+    }
+})

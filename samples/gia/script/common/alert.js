@@ -11,6 +11,7 @@ export default function displayAlert(kind, title, message) {
         alert.label = kind + " message";
         alert.open = true;
         alert.autoClose = true;
+        alert.autoCloseDuration = "fast";
         alert.icon = true;
         alert.kind = kind;
 

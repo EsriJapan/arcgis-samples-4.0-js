@@ -59,31 +59,42 @@
         <calcite-shell-panel slot="panel-start" position="start" id="shell-panel-start" display-mode="float-content"
             collapsed>
             <calcite-action-bar slot="action-bar" id="left-action-bar">
+                <calcite-action data-action-id="layer" icon="layers" text="レイヤー"
+                    style="display: none;"></calcite-action>
                 <calcite-action data-action-id="point" icon="pin-tear" text="ポイント"></calcite-action>
                 <calcite-action data-action-id="line" icon="curve" text="ライン"></calcite-action>
                 <calcite-action data-action-id="polygon" icon="polygon-area" text="ポリゴン"></calcite-action>
             </calcite-action-bar>
-            <calcite-panel heading="ポイント" data-panel-id="point" closable closed>
-                <calcite-flow data-flow-id="point">
-                    <calcite-flow-item data-flow-item-id="point">
+            <calcite-flow data-flow-id="layer">
+                <calcite-flow-item data-flow-item-id="layer" overlay-positioning="absolute" heading="レイヤー" closable closed>
+                    <div id="layer-icon" class="text-center" style="display: block;">
+                        <calcite-icon class="esri-icon-layers esri-layers-list" text-label="add layers" icon="layers"
+                            scale="l"></calcite-icon>
+                    </div>
+                    <calcite-card id="non-layer-card" class="tip" thumbnail-position="block-start" calcite-hydrated style="display: block;">
+                        <span slot="description">マップにレイヤーを追加すると、そのレイヤーがここに表示されます。</span>
+                    </calcite-card>
+                    <arcgis-layer-list id="layer-list" reference-element="mapEl" style="display: none;" 
+                        selection-mode="single" visibility-appearance="checkbox" drag-enabled></arcgis-layer-list>
+                    <calcite-button slot="fab" id="add-layer" appearance="outline" icon-start="layers" kind="brand"
+                        width="auto" overlay-positioning="fixed" placement="bottom-end">追加</calcite-button>
+                </calcite-flow-item>
+            </calcite-flow>
+            <calcite-flow data-flow-id="point">
+                <calcite-flow-item heading="ポイント" overlay-positioning="absolute" data-flow-item-id="point" closable closed>
 
-                    </calcite-flow-item>
-                </calcite-flow>
-            </calcite-panel>
-            <calcite-panel heading="ライン" data-panel-id="line" closable closed>
-                <calcite-flow data-flow-id="line">
-                    <calcite-flow-item data-flow-item-id="line">
+                </calcite-flow-item>
+            </calcite-flow>
+            <calcite-flow data-flow-id="line" overlay-positioning="absolute">
+                <calcite-flow-item heading="ライン" overlay-positioning="absolute" data-flow-item-id="line" closable closed>
 
-                    </calcite-flow-item>
-                </calcite-flow>
-            </calcite-panel>
-            <calcite-panel heading="ポリゴン" data-panel-id="polygon" closable closed>
-                <calcite-flow data-flow-id="polygon">
-                    <calcite-flow-item data-flow-item-id="polygon">
+                </calcite-flow-item>
+            </calcite-flow>
+            <calcite-flow data-flow-id="polygon" overlay-positioning="absolute">
+                <calcite-flow-item heading="ポリゴン" overlay-positioning="absolute" data-flow-item-id="polygon" closable closed>
 
-                    </calcite-flow-item>
-                </calcite-flow>
-            </calcite-panel>
+                </calcite-flow-item>
+            </calcite-flow>
         </calcite-shell-panel>
 
         <!-- 右サイド パネル -->
