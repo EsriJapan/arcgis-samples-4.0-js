@@ -260,7 +260,9 @@ function changeFlowTabItem(tabNav, flow) {
     }
 
     if (dispCnt == 0) {
-        flow.back();
+        if (flow) {
+            flow.back();
+        }
     }
 }
 
