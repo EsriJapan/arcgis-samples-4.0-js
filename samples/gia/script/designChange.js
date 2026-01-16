@@ -248,11 +248,14 @@ async function creatFlow(event, elem) {
 function changeFlowTabItem(tabNav, flow) {
     let dispCnt = 0;
     const mapEl = document.querySelector("arcgis-map");
+    let firstFlg = true;
     for (let tabTitle of tabNav.children) {
         const id = tabTitle.getAttribute("data-tab-title-id");
         const obj = vl.getStyleLayer(id);
         if (obj.minzoom <= mapEl.zoom && obj.maxzoom >= mapEl.zoom) {
             tabTitle.style.display = "block";
+            if (firstFlg) tabTitle.selected = true;
+            firstFlg = false;
             dispCnt++;
         } else {
             tabTitle.style.display = "none";
@@ -334,7 +337,7 @@ function setPropertyFields(lyrId, block1, block2) {
         }
     } else if (obj.type == "line") {
         setColorPicker(obj, lyrId, block1, "line-color", "");
-        setNumElem(obj, lyrId, block1, "line-width", "ラインの幅", false, "paint");
+        setMultiPatternElem(obj, lyrId, block1, "line-width", "ラインの幅", false, "paint", ["ズーム", "幅"]);
         const capOpt = [
             { butt: "終端なし" },
             { round: "半円" },
