@@ -150,7 +150,7 @@ sceneEl.clippingArea = {
     xmin: 122.93, // 西端 与那国島付近
     ymin: 20.42,  // 南端 沖ノ鳥島付近
     xmax: 153.99, // 東端 南鳥島付近
-    ymax: 45.56,  // 北端 択捉島付近
+    ymax: 46.56,  // 北端 択捉島付近
     spatialReference: { wkid: 4326 }
 }
 
@@ -197,7 +197,7 @@ bmg.addEventListener("arcgisPropertyChange", event => {
 
 // サインイン処理
 const authButton = document.getElementById("auth-button");
-const menuSheet =  document.getElementById("menu-sheet");
+const menuSheet = document.getElementById("menu-sheet");
 /**
  * サインイン
  */
@@ -243,8 +243,11 @@ layerList.addEventListener("arcgisTriggerAction", async event => {
                 }
             });
         } else {
-            mapEl.map.remove(lyr);
-            sceneEl.map.remove(lyr);
+            if (mapSceneButton.iconStart == "2d") {
+                mapEl.map.remove(lyr);
+            } else if (mapSceneButton.iconStart == "3d") {
+                sceneEl.map.remove(lyr);
+            }
         }
     }
 })

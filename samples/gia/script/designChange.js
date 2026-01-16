@@ -38,48 +38,68 @@ function initSymbolList(elem) {
 
 function setSymbolList(layer, elem) {
     const path = layer.metadata.path.split("-");
+    let parentElem = elem;
     for (let idx = 0; idx < path.length; idx++) {
         const tag = path[idx];
-        const tgElem = elem.querySelector(`[data-block-id=${CSS.escape(tag)}]`);
+        if (idx == 0) {
+            parentElem = elem;
+        } else {
+            let pElem = elem;
+            for (let subIdx = 0; subIdx < idx; subIdx++) {
+                pElem = pElem.querySelector(`[data-block-id=${CSS.escape(path[subIdx])}]`);
+            }
+            parentElem = pElem;
+        }
+        let tgElem = parentElem.querySelector(`[data-block-id=${CSS.escape(tag)}]`);
         if (idx == 0) {
             if (!tgElem) {
-                addBlockElm(elem, tag)
+                tgElem = addBlockElm(parentElem, tag)
             }
         }
         if (idx + 1 == path.length) {
             let tgt = null;
             if (path.length == 1) {
-                tgt = path[idx];
+                tgt = tag;
             } else {
                 tgt = path[idx - 1];
             }
-            const tgtElm = elem.querySelector(`[data-block-id=${CSS.escape(tgt)}]`);
-            let tgtListElm = elem.querySelector(`[data-list-id=${CSS.escape(tgt)}]`);
+            const tgtElm = parentElem;
+            let tgtListElm = parentElem.querySelector(`[data-list-id=${CSS.escape(tgt)}]`);
 
             if (!tgtListElm) {
                 const listElm = document.createElement("calcite-list");
                 listElm.label = tgt;
                 listElm.setAttribute("data-list-id", tgt);
-                tgtElm.append(listElm)
+                parentElem.prepend(listElm)
                 tgtListElm = listElm;
             }
 
-            const listItemElm = document.createElement("calcite-list-item");
-            listItemElm.label = path[idx];
-            listItemElm.setAttribute("value", layer.id);
-            listItemElm.setAttribute("data-list-item-id", layer.id);
-            listItemElm.addEventListener("calciteListItemSelect", event => creatFlow(event, elem));
-            listItemElm.maxzoom = layer.maxzoom;
-            listItemElm.minzoom = layer.minzoom;
-            const chkBox = document.createElement("calcite-checkbox");
-            chkBox.checked = true;
-            chkBox.slot = "content-start";
-            chkBox.setAttribute("value", layer.id);
-            chkBox.setAttribute("data-ckeckbox-id", layer.id);
-            chkBox.addEventListener("click", e => e.stopPropagation())
-            chkBox.addEventListener("calciteCheckboxChange", event => visibleLayer(event.target, elem));
-            listItemElm.append(chkBox);
-            tgtListElm.append(listItemElm);
+            let listItemElm = parentElem.querySelector(`[data-list-item-id=${CSS.escape(tag)}]`);
+            if (listItemElm) {
+                if (listItemElm.maxzoom < layer.maxzoom) listItemElm.maxzoom = layer.maxzoom;
+                if (listItemElm.minzoom > layer.minzoom) listItemElm.minzoom = layer.minzoom;
+                const idArray = JSON.parse(listItemElm.getAttribute("data-list-item-array"))
+                idArray.push(layer.id);
+                listItemElm.setAttribute("data-list-item-array", JSON.stringify(idArray));
+                const chkBox = listItemElm.querySelector("calcite-checkbox");
+                chkBox.setAttribute("data-checkbox-array", JSON.stringify(idArray));
+            } else {
+                listItemElm = document.createElement("calcite-list-item");
+                listItemElm.label = tag;
+                listItemElm.setAttribute("data-list-item-id", tag);
+                listItemElm.setAttribute("data-list-item-array", `["${layer.id}"]`);
+                listItemElm.addEventListener("calciteListItemSelect", async event => await creatFlow(event, elem));
+                listItemElm.maxzoom = layer.maxzoom;
+                listItemElm.minzoom = layer.minzoom;
+                const chkBox = document.createElement("calcite-checkbox");
+                chkBox.checked = true;
+                chkBox.slot = "content-start";
+                chkBox.setAttribute("data-checkbox-array", layer.id);
+                chkBox.addEventListener("click", e => e.stopPropagation())
+                chkBox.addEventListener("calciteCheckboxChange", event => visibleLayer(event.target, elem));
+                listItemElm.prepend(chkBox);
+                tgtListElm.prepend(listItemElm);
+            }
             if (mapEl.zoom <= listItemElm.maxzoom && mapEl.zoom >= listItemElm.minzoom) {
                 listItemElm.style.display = "block";
                 if (tgtElm.style.display === "none") {
@@ -92,7 +112,7 @@ function setSymbolList(layer, elem) {
             if (!tgElem) {
                 const bfTag = path[idx - 1];
                 const prtElem = elem.querySelector(`[data-block-id=${CSS.escape(bfTag)}]`);
-                addBlockElm(prtElem, tag)
+                tgElem = addBlockElm(prtElem, tag)
             }
         }
     }
@@ -110,12 +130,16 @@ function addBlockElm(elem, heading) {
     chkBox.slot = "content-start";
     chkBox.addEventListener("calciteCheckboxChange", event => visibleGroupe(event.target, block));
     chkBox.addEventListener("click", e => e.stopPropagation())
-    block.append(chkBox)
-    elem.append(block)
+    block.prepend(chkBox)
+    elem.prepend(block)
+    return block;
 }
 
 function visibleLayer(elem, baseElem) {
-    vl.setStyleLayerVisibility(elem.value, elem.checked ? "visible" : "none");
+    const idArray = JSON.parse(elem.getAttribute("data-checkbox-array"))
+    for (let id of idArray) {
+        vl.setStyleLayerVisibility(id, elem.checked ? "visible" : "none");
+    }
 
     let pEl = elem.parentElement.parentElement;
     while (pEl && pEl.tagName !== baseElem.tagName) {
@@ -154,7 +178,10 @@ function visibleGroupe(target, elem) {
             item.firstElementChild.checked = false;
             visible = "none"
         }
-        vl.setStyleLayerVisibility(item.value, visible)
+        const idArray = JSON.parse(item.getAttribute("data-list-item-array"))
+        for (let id of idArray) {
+            vl.setStyleLayerVisibility(id, visible);
+        }
     }
     const blocks = elem.querySelectorAll("calcite-block");
     for (let block of blocks) {
@@ -162,28 +189,79 @@ function visibleGroupe(target, elem) {
     }
 }
 
-function creatFlow(event, elem) {
+async function creatFlow(event, elem) {
+    const [
+        reactiveUtils
+    ] = await $arcgis.import([
+        "@arcgis/core/core/reactiveUtils.js"
+    ]);
     const newFlowItem = document.createElement("calcite-flow-item");
     newFlowItem.addEventListener("calciteFlowItemBack", () => {
         newFlowItem.remove();
     });
     newFlowItem.heading = event.target.label;
     newFlowItem.description = elem.parentElement.parentElement.heading;
-    const block1 = document.createElement("calcite-block");
-    block1.heading = "スタイル"
-    block1.collapsible = true;
 
-    const block2 = document.createElement("calcite-block");
-    block2.heading = "レイアウト"
-    block2.collapsible = true;
+    const tabs = document.createElement("calcite-tabs");
+    newFlowItem.append(tabs);
+    const tabNav = document.createElement("calcite-tab-nav");
+    tabs.append(tabNav);
+    const idArray = JSON.parse(event.target.getAttribute("data-list-item-array"));
+    let idx = 1;
+    for (let id of idArray) {
+        const tabTitle = document.createElement("calcite-tab-title");
+        tabTitle.innerText = event.target.label + idx;
+        tabTitle.setAttribute("data-tab-title-id", id);
+        tabNav.append(tabTitle);
+        tabNav.slot = "title-group";
 
-    newFlowItem.append(block2);
-    newFlowItem.append(block1);
-    elem.parentElement.append(newFlowItem);
+        const tab = document.createElement("calcite-tab");
+        const block1 = document.createElement("calcite-block");
+        block1.heading = "スタイル"
+        block1.collapsible = true;
+        block1.expanded = true;
+
+        const block2 = document.createElement("calcite-block");
+        block2.heading = "レイアウト"
+        block2.collapsible = true;
+        block2.expanded = true;
+
+        if (idx == 1) tab.selected = true;
+        tab.append(block1);
+        tab.append(block2);
+        tabs.append(tab)
+        setPropertyFields(id, block1, block2);
+        idx++;
+    }
     const flowItems = elem.parentElement.querySelectorAll("calcite-flow-item");
     flowItems.forEach(item => item.selected = false);
+    elem.parentElement.append(newFlowItem);
     newFlowItem.selected = true;
-    setPropertyFields(event.target.value, block1, block2);
+    changeFlowTabItem(tabNav, newFlowItem.parentElement);
+
+    const mapEl = document.querySelector("arcgis-map");
+    reactiveUtils.watch(() => mapEl.view.stationary, function (event) {
+        changeFlowTabItem(tabNav, newFlowItem.parentElement);
+    });
+}
+
+function changeFlowTabItem(tabNav, flow) {
+    let dispCnt = 0;
+    const mapEl = document.querySelector("arcgis-map");
+    for (let tabTitle of tabNav.children) {
+        const id = tabTitle.getAttribute("data-tab-title-id");
+        const obj = vl.getStyleLayer(id);
+        if (obj.minzoom <= mapEl.zoom && obj.maxzoom >= mapEl.zoom) {
+            tabTitle.style.display = "block";
+            dispCnt++;
+        } else {
+            tabTitle.style.display = "none";
+        }
+    }
+
+    if (dispCnt == 0) {
+        flow.back();
+    }
 }
 
 function setPropertyFields(lyrId, block1, block2) {

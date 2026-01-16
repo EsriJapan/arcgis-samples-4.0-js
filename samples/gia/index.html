@@ -102,10 +102,14 @@
             collapsed>
             <calcite-action-bar slot="action-bar" id="right-action-bar">
                 <calcite-action data-action-id="basemap-gallery" text="ベースマップ ギャラリー" icon="basemap"></calcite-action>
+                <calcite-action data-action-id="legend" icon="legend" text="凡例"></calcite-action>
                 <calcite-action data-action-id="print" icon="print" text="印刷"></calcite-action>
             </calcite-action-bar>
             <calcite-panel heading="ベースマップ ギャラリー" data-panel-id="basemap-gallery" closable closed>
                 <arcgis-basemap-gallery reference-element="mapEl"></arcgis-basemap-gallery>
+            </calcite-panel>
+            <calcite-panel heading="凡例" data-panel-id="legend" closable closed>
+                <arcgis-legend reference-element="mapEl"></arcgis-legend>
             </calcite-panel>
             <calcite-panel heading="印刷" data-panel-id="print" closable closed>
                 <arcgis-print reference-element="mapEl"></arcgis-print>

@@ -10,6 +10,7 @@ const mapSceneButton = document.getElementById("mapScene-button");
 const headerImage = document.getElementById("header-title");
 const addLayerBtn = document.getElementById("add-layer");
 const layerList = document.querySelector("arcgis-layer-list")
+const legend = document.querySelector("arcgis-legend")
 
 let activeWidgetList = {
     left: null,
@@ -142,6 +143,7 @@ function changeMapMode() {
         mapEl.style.display = "none";
         sceneEl.style.display = "block";
         layerList.referenceElement = "sceneEl"
+        legend.referenceElement = "sceneEl"
         designChange(sceneEl);
     } else {
         mapSceneButton.iconStart = "2d";
@@ -150,6 +152,7 @@ function changeMapMode() {
         sceneEl.style.display = "none";
         mapEl.style.display = "block";
         layerList.referenceElement = "mapEl"
+        legend.referenceElement = "mapEl"
         designChange(mapEl);
     }
 }
