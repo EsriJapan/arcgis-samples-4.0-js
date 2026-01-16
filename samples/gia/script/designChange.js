@@ -212,6 +212,7 @@ async function creatFlow(event, elem) {
         const tabTitle = document.createElement("calcite-tab-title");
         tabTitle.innerText = event.target.label + idx;
         tabTitle.setAttribute("data-tab-title-id", id);
+        tabTitle.style.display = "none";
         tabNav.append(tabTitle);
         tabNav.slot = "title-group";
 
@@ -253,8 +254,8 @@ function changeFlowTabItem(tabNav, flow) {
         const id = tabTitle.getAttribute("data-tab-title-id");
         const obj = vl.getStyleLayer(id);
         if (obj.minzoom <= mapEl.zoom && obj.maxzoom >= mapEl.zoom) {
+            if (firstFlg && tabTitle.style.display == "none") tabTitle.selected = true;
             tabTitle.style.display = "block";
-            if (firstFlg) tabTitle.selected = true;
             firstFlg = false;
             dispCnt++;
         } else {
