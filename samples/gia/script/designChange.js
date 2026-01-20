@@ -94,7 +94,7 @@ function setSymbolList(layer, elem) {
                 const chkBox = document.createElement("calcite-checkbox");
                 chkBox.checked = true;
                 chkBox.slot = "content-start";
-                chkBox.setAttribute("data-checkbox-array", layer.id);
+                chkBox.setAttribute("data-checkbox-array", `["${layer.id}"]`);
                 chkBox.addEventListener("click", e => e.stopPropagation())
                 chkBox.addEventListener("calciteCheckboxChange", event => visibleLayer(event.target, elem));
                 listItemElm.prepend(chkBox);
@@ -395,7 +395,11 @@ function setNumElem(obj, lyrId, block, propName, discription, intFlg, paintLayou
         if (paintLayout == "paint") {
             changePaintVisualization(lyrId, setProp)
         } else {
-            changeLayoutVisualization(lyrId, setProp)
+            if (obj.type == "symbol" && !obj.paint) {
+                recreateLayoutVisualization(lyrId, setProp);
+            } else {
+                changeLayoutVisualization(lyrId, setProp)
+            }
         }
     })
     block.append(numLabel);
@@ -564,11 +568,26 @@ function inputRestrictions(inputValue) {
 
 function changePaintVisualization(lyrId, paint) {
     vl.setPaintProperties(lyrId, paint)
-    vl.refresh();
+    vl.loadStyle().then(() => {
+        vl.refresh()
+    })
 }
 
 function changeLayoutVisualization(lyrId, layout) {
     vl.setLayoutProperties(lyrId, layout);
-    vl.refresh();
+    vl.loadStyle().then(() => {
+        vl.refresh()
+    })
 }
 
+function recreateLayoutVisualization(lyrId, layout) {
+    const lyrIdx = vl.getStyleLayerIndex(lyrId);
+    const layer = JSON.parse(JSON.stringify(vl.getStyleLayer(lyrId)));
+    layer.layout = layout;
+    vl.deleteStyleLayer(lyrId);
+    vl.setStyleLayer(layer, lyrIdx);
+
+    vl.loadStyle().then(() => {
+        vl.refresh()
+    })
+}

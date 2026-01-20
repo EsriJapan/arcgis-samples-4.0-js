@@ -40,6 +40,16 @@ const gsis = [
     }
 ]
 
+// 地図を動かせる範囲
+const moveEnableExtent = {
+    type: "extent",
+    xmin: 122.93, // 西端 与那国島付近
+    ymin: 20.42,  // 南端 沖ノ鳥島付近
+    xmax: 153.99, // 東端 南鳥島付近
+    ymax: 45.56,  // 北端 択捉島付近
+    spatialReference: { wkid: 4326 }
+}
+
 // 必要な ArcGIS Maps SDK for JavaScript のモジュールをロード
 const [
     VectorTileLayer,
@@ -49,6 +59,7 @@ const [
     reactiveUtils,
     Collection,
     ActionButton,
+    containsOperator
 ] = await $arcgis.import([
     "@arcgis/core/layers/VectorTileLayer.js",
     "@arcgis/core/Basemap.js",
@@ -56,7 +67,8 @@ const [
     "@arcgis/core/layers/WebTileLayer.js",
     "@arcgis/core/core/reactiveUtils.js",
     "@arcgis/core/core/Collection.js",
-    "@arcgis/core/support/actions/ActionButton.js"
+    "@arcgis/core/support/actions/ActionButton.js",
+    "@arcgis/core/geometry/operators/containsOperator.js"
 ]);
 
 // arcgis-map のコンポーネントを取得とコンポーネントの準備を待つ
@@ -79,15 +91,21 @@ function showMapCoordinates(pt) {
 }
 
 function showSceneCoordinates(pt) {
-    let coords = "Center Lat/Lon " + pt.latitude.toFixed(3) + " " + pt.longitude.toFixed(3) +
-        " | Scale 1:" + Math.round(sceneEl.view.scale * 1) / 1 +
-        " | Zoom " + Math.floor(sceneEl.view.zoom);
+    let coords = "Center Lat/Lon " + pt.position.latitude.toFixed(3) + " " + pt.position.longitude.toFixed(3) + " " + pt.position.z.toFixed(3)  + 
+        " | Tilt " + Math.floor(sceneEl.camera.tilt) +
+        " | Heading " + Math.floor(sceneEl.camera.heading) +
+        " | Fov " + Math.floor(sceneEl.camera.fov);
     coordsSceneWidget.innerHTML = coords;
 }
 
 mapEl.addEventListener("arcgisViewReadyChange", () => {
     mapEl.style.display = "none";
     reactiveUtils.watch(() => mapEl.view.stationary, function (event) {
+        if (mapEl.zoom >= 15) {
+            mapEl.constraints.snapToZoom = true
+        } else {
+            mapEl.constraints.snapToZoom = false
+        }
         showMapCoordinates(mapEl.view.center);
         if ((pointFlowItem.children.length > 0 ||
             lineFlowItem.children.length > 0 ||
@@ -117,13 +135,16 @@ mapEl.addEventListener("arcgisViewReadyChange", () => {
     sceneEl.addEventListener("arcgisViewReadyChange", () => {
         mapEl.style.display = "block";
         reactiveUtils.watch(() => sceneEl.view.stationary, function (event) {
-            showSceneCoordinates(sceneEl.view.center);
+            showSceneCoordinates(sceneEl.camera);
         })
+
         sceneEl.style.display = "none";
         scrim.remove();
         loader.remove();
-    })
+    });
 });
+
+
 await mapEl.componentOnReady();
 
 const pointFlowItem = document.querySelector(`[data-flow-item-id="point"]`)
@@ -135,23 +156,15 @@ mapEl.constraints = {
     minZoom: 4,  // 最小ズームレベル
     maxZoom: 18, // 最大ズームレベル
     snapToZoom: false,
-    geometry: {
-        type: "extent",
-        xmin: 122.93, // 西端 与那国島付近
-        ymin: 20.42,  // 南端 沖ノ鳥島付近
-        xmax: 153.99, // 東端 南鳥島付近
-        ymax: 45.56,  // 北端 択捉島付近
-        spatialReference: { wkid: 4326 }
-    }
+    geometry: moveEnableExtent
 }
 
-sceneEl.clippingArea = {
-    type: "extent",
-    xmin: 122.93, // 西端 与那国島付近
-    ymin: 20.42,  // 南端 沖ノ鳥島付近
-    xmax: 153.99, // 東端 南鳥島付近
-    ymax: 46.56,  // 北端 択捉島付近
-    spatialReference: { wkid: 4326 }
+sceneEl.clippingArea = moveEnableExtent;
+sceneEl.constraints = {
+    ltitude: {    // 高度の最小/最大（単位: メートル）
+        max: 6709500 // 例: 1,000km より上に行けない
+    }
+
 }
 
 const lbs = new LocalBasemapsSource();
