@@ -120,21 +120,29 @@ async function getownerUsers(portalUrl, groupId) {
 async function changeSearchItemList(layerListDiv) {
     const [
         Portal,
-        PortalItem,
-        PortalQueryParams
+        PortalQueryParams,
+        Extent
     ] = await $arcgis.import([
         "@arcgis/core/portal/Portal.js",
-        "@arcgis/core/portal/PortalItem.js",
-        "@arcgis/core/portal/PortalQueryParams.js"
+        "@arcgis/core/portal/PortalQueryParams.js",
+        "@arcgis/core/geometry/Extent.js"
     ]);
 
     while (layerListDiv.firstChild) {
         layerListDiv.removeChild(layerListDiv.firstChild)
     }
 
+    const japanExtent = new Extent({
+        xmin: 122.93, // 西端 与那国島付近
+        ymin: 20.42,  // 南端 沖ノ鳥島付近
+        xmax: 153.99, // 東端 南鳥島付近
+        ymax: 45.56,  // 北端 択捉島付近
+        spatialReference: { wkid: 4326 }
+    })
     const portal = new Portal();
     await portal.load();
     const selItem = document.getElementById("item-search-select");
+    const selWord = document.getElementById("item-serach-word");
     let query = "";
     let getType = '(type: ("Feature Service"))'
     let ownerUsers = []
@@ -159,17 +167,50 @@ async function changeSearchItemList(layerListDiv) {
         }
         query = `${groupWhere}  ${getType}`
     } else if (selItem.value == "organization") {
-
+        let orgWhere = `orgid: ${portal.id}`
+        query = `${orgWhere} ${getType}`
     } else if (selItem.value == "livingAtlas") {
-
+        const groups = await portal.queryGroups(new PortalQueryParams({
+            query: 'title:"LAW Search" AND owner:Esri_LivingAtlas',
+            num: 100
+        }))
+        let cnt = 0;
+        let groupWhere = "";
+        for (let group of groups.results) {
+            if (cnt == 0) {
+                groupWhere = `group: (${group.id}`
+            } else {
+                groupWhere = groupWhere + ` OR ${group.id}`
+            }
+            cnt++;
+        }
+        if (cnt != 0) {
+            groupWhere = groupWhere + `)`
+        }
+        let other = [
+                'type:("Feature Service" OR "Map Service" OR "Image Service" OR "Vector Tile Service")',
+                'culture: ja-jp'
+            ].join(" AND ")
+        query = `${groupWhere} AND ${other}`
     } else if (selItem.value == "agol") {
-
+        query = [
+                'type:("Feature Service" OR "Map Service" OR "Image Service" OR "Vector Tile Service")',
+                'culture: ja-jp'
+            ].join(" AND ")
     }
+
+    if (selWord.value.trim().length > 0) {
+        let selKeyWord = selWord.value;
+        const wordWhere = ` AND (title: ${selKeyWord} OR tags: ${selKeyWord} OR description: ${selKeyWord} OR snippet: ${selKeyWord})`;
+        query = query + wordWhere;
+    }
+
     const pqp = new PortalQueryParams({
         query: query,
+        extent: japanExtent,
         sortField: "title",
         sortOrder: "asc",
-        num: 100,
+        num: 1000,
     });
 
     const mapSceneButton = document.getElementById("mapScene-button");
@@ -180,98 +221,112 @@ async function changeSearchItemList(layerListDiv) {
         map = sceneEl.map;
     }
 
-    let results = await portal.queryItems(pqp);
+    let results;
+    results = await portal.queryItems(pqp);
     results = results.results;
-    if (ownerUsers.length == 0) {
+    if (ownerUsers.length == 0 && results.length > 0) {
         let ownerList = results.map(result => result.owner);
         ownerList = Array.from(new Set(ownerList));
         let filterWherer;
         let cnt = 0;
         for (let owner of ownerList) {
             if (cnt == 0) {
-                filterWherer = `username: ${owner}`
+                filterWherer = `username: (${owner}`
             } else {
                 filterWherer = filterWherer + ` OR ${owner}`
             }
             cnt++;
         }
+        if (cnt != 0) {
+            filterWherer = filterWherer + `)`
+        }
         const ownerUserList = await portal.queryUsers(new PortalQueryParams({
-            filter: filterWherer
+            filter: filterWherer,
+            num: 100,
         }));
         ownerUsers = ownerUserList.results;
     }
     let pageNumber = 1;
     let layerListPage;
-    for (let idx = 0; idx < results.length; idx++) {
-        if (idx % 20 == 0) {
-            layerListPage = document.createElement("div");
-            layerListPage.setAttribute("data-layer-list-page", pageNumber)
-            layerListDiv.append(layerListPage);
-            if (idx == 0) {
-                layerListPage.style.display = "block";
-            } else {
-                layerListPage.style.display = "none";
+    const pageSize = 20;
+    if (results.length > 0) {
+        for (let idx = 0; idx < results.length; idx++) {
+            if (idx % pageSize == 0) {
+                layerListPage = document.createElement("div");
+                layerListPage.setAttribute("data-layer-list-page", pageNumber)
+                layerListDiv.append(layerListPage);
+                if (idx == 0) {
+                    layerListPage.style.display = "block";
+                } else {
+                    layerListPage.style.display = "none";
+                }
+                pageNumber++;
             }
-            pageNumber++;
+            const result = results[idx];
+            let alreadyFlg = alreadyAddChecker(result.id, map)
+            const card = document.createElement("calcite-card")
+            card.thumbnailPosition = "inline-end";
+            const layerTitle = document.createElement("span");
+            layerTitle.slot = "heading";
+            layerTitle.innerText = result.title;
+            layerTitle.classList.add("card-content");
+            card.append(layerTitle);
+            const serviceName = document.createElement("span");
+            serviceName.slot = "description";
+            serviceName.innerText = result.displayName;
+            serviceName.classList.add("card-content");
+            card.append(serviceName);
+            const figure = document.createElement("figure");
+            figure.classList.add("item-browser-card__thumbnail");
+            figure.slot = "thumbnail";
+            const img = document.createElement("img");
+            img.classList.add("thumbnail");
+            img.src = result.thumbnailUrl;
+            figure.append(img)
+            card.append(figure);
+            const labelDiv = document.createElement("div");
+            const inLabel = document.createElement("calcite-label");
+            labelDiv.classList.add("card-bottom")
+            labelDiv.slot = "footer-start";
+            inLabel.classList.add("inLabel")
+            inLabel.layout = "inline";
+            const avator = document.createElement("calcite-avatar");
+            const user = ownerUsers.find(user => user.username === result.owner);
+            let fullName = user && user.fullName ? user.fullName : result.owner;
+            avator.fullName = fullName;
+            avator.scale = "s"
+            inLabel.append(avator);
+            const userName = document.createElement("span");
+            userName.innerText = fullName;
+            inLabel.append(userName);
+            labelDiv.append(inLabel)
+            card.append(labelDiv);
+            const buttonDiv = document.createElement("div");
+            buttonDiv.classList.add("card-bottom")
+            buttonDiv.slot = "footer-end";
+            const addButton = document.createElement("calcite-button");
+            addButton.iconStart = alreadyFlg ? "minus" : "plus";
+            addButton.kind = alreadyFlg ? "inverse" : "neutral";
+            addButton.innerText = alreadyFlg ? "削除" : "追加";
+            addButton.scale = "s"
+            addButton.name = result.id;
+            addButton.addEventListener("click", addDelLayer);
+            buttonDiv.append(addButton)
+            card.append(buttonDiv);
+    
+            layerListPage.append(card)
         }
-        const result = results[idx];
-        let alreadyFlg = alreadyAddChecker(result.id, map)
-        const card = document.createElement("calcite-card")
-        card.thumbnailPosition = "inline-end";
-        const layerTitle = document.createElement("span");
-        layerTitle.slot = "heading";
-        layerTitle.innerText = result.title;
-        layerTitle.classList.add("card-content");
-        card.append(layerTitle);
-        const serviceName = document.createElement("span");
-        serviceName.slot = "description";
-        serviceName.innerText = result.displayName;
-        serviceName.classList.add("card-content");
-        card.append(serviceName);
-        const figure = document.createElement("figure");
-        figure.classList.add("item-browser-card__thumbnail");
-        figure.slot = "thumbnail";
-        const img = document.createElement("img");
-        img.classList.add("thumbnail");
-        img.src = result.thumbnailUrl;
-        figure.append(img)
-        card.append(figure);
-        const labelDiv = document.createElement("div");
-        const inLabel = document.createElement("calcite-label");
-        labelDiv.classList.add("card-bottom")
-        labelDiv.slot = "footer-start";
-        inLabel.classList.add("inLabel")
-        inLabel.layout = "inline";
-        const avator = document.createElement("calcite-avatar");
-        const user = ownerUsers.find(user => user.username === result.owner);
-        let fullName = user && user.fullName ? user.fullName : result.owner;
-        avator.fullName = fullName;
-        avator.scale = "s"
-        inLabel.append(avator);
-        const userName = document.createElement("span");
-        userName.innerText = fullName;
-        inLabel.append(userName);
-        labelDiv.append(inLabel)
-        card.append(labelDiv);
-        const buttonDiv = document.createElement("div");
-        buttonDiv.classList.add("card-bottom")
-        buttonDiv.slot = "footer-end";
-        const addButton = document.createElement("calcite-button");
-        addButton.iconStart = alreadyFlg ? "minus" : "plus";
-        addButton.kind = alreadyFlg ? "inverse" : "neutral";
-        addButton.innerText = alreadyFlg ? "削除" : "追加";
-        addButton.scale = "s"
-        addButton.name = result.id;
-        addButton.addEventListener("click", addDelLayer);
-        buttonDiv.append(addButton)
-        card.append(buttonDiv);
-
-        layerListPage.append(card)
+    } else {
+        const noneMessage = document.createElement("div");
+        noneMessage.style.width = "100%;"
+        noneMessage.style.textAlign = "center";
+        noneMessage.innerText = "サービスが 1 件もヒットしませんでした。"
+        layerListDiv.append(noneMessage);
     }
 
-    if (results.length > 20) {
+    if (results.length > pageSize) {
         const pagenation = document.createElement("calcite-pagination");
-        pagenation.pageSize = 20;
+        pagenation.pageSize = pageSize;
         pagenation.totalItems = results.length;
         pagenation.style.textAlign = "center";
         layerListDiv.append(pagenation);
@@ -323,7 +378,8 @@ function creatFlow(elem) {
     searchArea.placeholder = "検索";
     searchArea.clearable = true;
     searchArea.icon = "search";
-    searchArea.scale = "l"
+    searchArea.scale = "l";
+    searchArea.id = "item-serach-word";
     searchArea.addEventListener("calciteInputTextChange", () => changeSearchItemList(layerListDiv).then())
 
     newFlowItem.append(searchArea)
