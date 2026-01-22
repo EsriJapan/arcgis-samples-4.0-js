@@ -253,7 +253,7 @@ function changeFlowTabItem(tabNav, flow) {
     for (let tabTitle of tabNav.children) {
         const id = tabTitle.getAttribute("data-tab-title-id");
         const obj = vl.getStyleLayer(id);
-        if (obj.minzoom <= mapEl.zoom && obj.maxzoom >= mapEl.zoom) {
+        if (obj && obj.minzoom && obj.maxzoom && obj.minzoom <= mapEl.zoom && obj.maxzoom >= mapEl.zoom) {
             if (firstFlg && tabTitle.style.display == "none") tabTitle.selected = true;
             tabTitle.style.display = "block";
             firstFlg = false;
