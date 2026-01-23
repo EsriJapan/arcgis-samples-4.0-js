@@ -110,16 +110,16 @@ async function returnLayer(item) {
             });
             break;
         case "OGC Feature":
-            layer = new OGCFeatureLayer ({
+            layer = new OGCFeatureLayer({
                 portalItem: item
             });
             break;
         case "Tile":
             if (item.type == "Vector Tile Service") {
-                layer = new VectorTileLayer ({
+                layer = new VectorTileLayer({
                     portalItem: item
                 });
-            } else if(item.type == "Map Service") {
+            } else if (item.type == "Map Service") {
                 layer = new TileLayer({
                     portalItem: item
                 });
@@ -136,7 +136,7 @@ async function returnLayer(item) {
             });
             break;
         case "Video":
-            layer = new VideoLayer ({
+            layer = new VideoLayer({
                 portalItem: item
             });
             break;
@@ -146,7 +146,7 @@ async function returnLayer(item) {
             });
             break;
         case "Scene":
-            layer = new SceneLayer ({
+            layer = new SceneLayer({
                 portalItem: item
             });
             break;
@@ -177,16 +177,29 @@ async function addDelLayer() {
     await item.load();
     const mapSceneButton = document.getElementById("mapScene-button");
     if (this.innerText == "追加") {
-        let layer = returnLayer(item);
+        let layer = await returnLayer(item);
         if (layer) {
+            let viewEl;
             if (mapSceneButton.iconStart == "2d") {
-                mapEl.map.add(layer);
+                viewEl = mapEl;
             } else if (mapSceneButton.iconStart == "3d") {
-                sceneEl.map.add(layer);
+                viewEl = sceneEl;
             }
-            this.innerText = "削除";
-            this.iconStart = "minus";
-            this.kind = "inverse"
+            viewEl.map.add(layer);
+            layer.when().catch(error => {
+                console.log("layer", layer)
+                displayAlert("warning", `${layer.title} レイヤーの取得に失敗しました。`, error.message)
+            })
+            viewEl.whenLayerView(layer).then(async (layerView) => {
+                if (viewEl.map.layers.length == 1 && ["feature", "group", "map-image", "scene"].includes(layer.type)) {
+                    await viewEl.goTo(layer.fullExtent);
+                }
+                this.innerText = "削除";
+                this.iconStart = "minus";
+                this.kind = "inverse"
+            }).catch(error => {
+                displayAlert("warning", `${layer.title} レイヤーの追加に失敗しました。`, error.message)
+            })
         } else {
 
         }

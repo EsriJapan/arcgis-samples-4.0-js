@@ -249,19 +249,25 @@ layerList.listItemCreatedFunction = (event) => {
     ];
 
     if (delTargetArray.includes(item.layer.type)) {
-        item.actionsSections = new Collection([
-            new Collection([
+        const eventCollections = new Collection();
+        if (["feature", "group", "map-image", "scene"].includes(item.layer.type)) {
+            eventCollections.add(
                 new ActionButton({
                     title: "レイヤーにズーム",
                     icon: "zoom-out-fixed",
                     id: "full-extent"
-                }),
-                new ActionButton({
-                    title: "レイヤーの削除",
-                    icon: "trash",
-                    id: "trash"
                 })
-            ])
+            )
+        }
+        eventCollections.add(
+            new ActionButton({
+                title: "レイヤーの削除",
+                icon: "trash",
+                id: "trash"
+            })
+        )
+        item.actionsSections = new Collection([
+            eventCollections
         ])
     }
 }
@@ -286,6 +292,18 @@ layerList.addEventListener("arcgisTriggerAction", async event => {
             });
         } else {
             viewEl.map.remove(lyr);
+        }
+        const iconDiv = document.getElementById("layer-icon");
+        const nonLyrCrd = document.getElementById("non-layer-card");
+        const layerView = document.getElementById("layer-list");
+        if (viewEl.map.layers.length > 0) {
+            iconDiv.style.display = "none";
+            nonLyrCrd.style.display = "none";
+            layerView.style.display = "block";
+        } else {
+            iconDiv.style.display = "block";
+            nonLyrCrd.style.display = "block";
+            layerView.style.display = "none";
         }
     }
 })
