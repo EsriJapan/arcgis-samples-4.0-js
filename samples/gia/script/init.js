@@ -269,8 +269,14 @@ layerList.listItemCreatedFunction = (event) => {
 layerList.addEventListener("arcgisTriggerAction", async event => {
     let act = event.detail.action;
     let lyr = event.detail.item.layer;
+    let viewEl
+    if (mapSceneButton.iconStart == "2d") {
+        viewEl = mapEl;
+    } else if (mapSceneButton.iconStart == "3d") {
+        viewEl = sceneEl;
+    }
     if (act.id == "full-extent") {
-        await mapEl.goTo(lyr.fullExtent)
+        await viewEl.goTo(lyr.fullExtent)
     } else if (act.id == "trash") {
         if (lyr.parent) {
             lyr.parent.layers.items.forEach(element => {
@@ -279,11 +285,7 @@ layerList.addEventListener("arcgisTriggerAction", async event => {
                 }
             });
         } else {
-            if (mapSceneButton.iconStart == "2d") {
-                mapEl.map.remove(lyr);
-            } else if (mapSceneButton.iconStart == "3d") {
-                sceneEl.map.remove(lyr);
-            }
+            viewEl.map.remove(lyr);
         }
     }
 })
