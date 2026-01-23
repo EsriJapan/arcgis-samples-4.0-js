@@ -255,7 +255,7 @@ async function changeSearchItemList(layerListDiv) {
         map = mapEl.map;
         let targetIndex = targetTypes.indexOf(`type: "Scene Service"`);
         if (targetIndex !== -1) {
-            targetIndex.splice(targetIndex, 1)
+            targetTypes.splice(targetIndex, 1)
         }
     } else if (mapSceneButton.iconStart == "3d") {
         map = sceneEl.map;
