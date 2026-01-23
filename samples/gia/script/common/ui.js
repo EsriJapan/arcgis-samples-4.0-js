@@ -125,24 +125,36 @@ function changeStyleMode() {
         styleButton.innerText = "ダーク モード";
         document.body.classList.toggle("calcite-mode-dark");
         headerImage.thumbnail = "./images/ej-logo-dark.svg";
+        sceneEl.map.ground.surfaceColor = [54, 54, 54, 1]
+        sceneEl.view.environment.background = {
+            type: "color",
+            color: [54, 54, 54, 1]
+        }
     } else {
         styleButton.iconStart = "brightness";
         styleButton.innerText = "ライト モード";
         document.body.classList.remove("calcite-mode-dark");
         headerImage.thumbnail = "./images/ej-logo-light.svg";
+        sceneEl.map.ground.surfaceColor = [247, 247, 247, 1]
+        sceneEl.view.environment.background = {
+            type: "color",
+            color: [247, 247, 247, 1]
+        }
     }
 }
 
 const printPanelItem = document.querySelector(`[data-action-id="print"]`)
 // アプリのスタイルを変更をする処理
 function changeMapMode() {
+    let viewEl = mapEl;
     if (mapSceneButton.iconStart == "2d") {
         mapSceneButton.iconStart = "3d";
         mapSceneButton.innerText = "シーン";
         printPanelItem.style.display = "none";
         mapEl.style.display = "none";
         sceneEl.style.display = "block";
-        layerList.referenceElement = "sceneEl"
+        layerList.referenceElement = sceneEl
+        viewEl = sceneEl;
         legend.referenceElement = "sceneEl"
         designChange(sceneEl);
     } else {
@@ -151,9 +163,23 @@ function changeMapMode() {
         printPanelItem.style.display = "block";
         sceneEl.style.display = "none";
         mapEl.style.display = "block";
-        layerList.referenceElement = "mapEl"
+        layerList.referenceElement = mapEl
         legend.referenceElement = "mapEl"
         designChange(mapEl);
+    }
+
+
+    const iconDiv = document.getElementById("layer-icon");
+    const nonLyrCrd = document.getElementById("non-layer-card");
+    const layerView = document.getElementById("layer-list");
+    if (viewEl.map.layers.length > 0) {
+        iconDiv.style.display = "none";
+        nonLyrCrd.style.display = "none";
+        layerView.style.display = "block";
+    } else {
+        iconDiv.style.display = "block";
+        nonLyrCrd.style.display = "block";
+        layerView.style.display = "none";
     }
 }
 

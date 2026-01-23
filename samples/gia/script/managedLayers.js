@@ -2,9 +2,7 @@ import displayAlert from "./common/alert.js"
 export default async function managedLayers() {
 
     const layerFlow = document.querySelector(`[data-flow-id="layer"]`)
-    // initSymbolList(layerFlow);
     creatFlow(layerFlow)
-    // setLayerIist(layerFlow);
 }
 
 const selOpt = {
@@ -15,64 +13,183 @@ const selOpt = {
     agol: "ArcGIS Online"
 }
 
-function initSymbolList(elem) {
-    // 初期化
-    for (let idx = elem.childNodes.length; idx > 1; idx--) {
-        let child = elem.childNodes[idx - 1];
-        elem.remove(child);
+const targetTypes = [
+    `type:"Map Service"`,
+    `type:"Feature Service"`,
+    `type:"Image Service"`,
+    `type:"Vector Tile Service"`,
+    `type:"OGCFeatureServer"`,
+    `type:"WMS"`,
+    `type:"WFS"`,
+    `type:"WMTS"`,
+    `type:"WCS"`,
+    `type:"KML"`,
+    `type:"Video Service"`,
+    `type:"Media Layer"`,
+    `type:"Group Layer"`,
+    `type:"GeoJson"`
+]
+
+async function returnLayer(item) {
+    let layer;
+    const type = item.displayName.replace(" Layer", "");
+    const [
+        FeatureLayer,
+        GroupLayer,
+        MapImageLayer,
+        WMSLayer,
+        WFSLayer,
+        WMTSLayer,
+        WCSLayer,
+        KMLLayer,
+        VectorTileLayer,
+        OGCFeatureLayer,
+        TileLayer,
+        ImageryLayer,
+        ImageryTileLayer,
+        VideoLayer,
+        MediaLayer,
+        SceneLayer,
+    ] = await $arcgis.import([
+        "@arcgis/core/layers/FeatureLayer.js",
+        "@arcgis/core/layers/GroupLayer.js",
+        "@arcgis/core/layers/MapImageLayer.js",
+        "@arcgis/core/layers/WMSLayer.js",
+        "@arcgis/core/layers/WFSLayer.js",
+        "@arcgis/core/layers/WMTSLayer.js",
+        "@arcgis/core/layers/WCSLayer.js",
+        "@arcgis/core/layers/KMLLayer.js",
+        "@arcgis/core/layers/VectorTileLayer.js",
+        "@arcgis/core/layers/OGCFeatureLayer.js",
+        "@arcgis/core/layers/TileLayer.js",
+        "@arcgis/core/layers/ImageryLayer.js",
+        "@arcgis/core/layers/ImageryTileLayer.js",
+        "@arcgis/core/layers/VideoLayer.js",
+        "@arcgis/core/layers/MediaLayer.js",
+        "@arcgis/core/layers/SceneLayer.js",
+    ]);
+    switch (type) {
+        case "Feature":
+            layer = new FeatureLayer({
+                portalItem: item
+            });
+            break;
+        case "Group":
+            layer = new GroupLayer({
+                portalItem: item
+            });
+            break;
+        case "Map Image":
+            layer = new MapImageLayer({
+                portalItem: item
+            });
+            break;
+        case "WMS":
+            layer = new WMSLayer({
+                portalItem: item
+            });
+            break;
+        case "WFS":
+            layer = new WFSLayer({
+                portalItem: item
+            });
+            break;
+        case "WMTS":
+            layer = new WMTSLayer({
+                portalItem: item
+            });
+            break;
+        case "WCS":
+            layer = new WCSLayer({
+                portalItem: item
+            });
+            break;
+        case "KML":
+            layer = new KMLLayer({
+                portalItem: item
+            });
+            break;
+        case "OGC Feature":
+            layer = new OGCFeatureLayer ({
+                portalItem: item
+            });
+            break;
+        case "Tile":
+            if (item.type == "Vector Tile Service") {
+                layer = new VectorTileLayer ({
+                    portalItem: item
+                });
+            } else if(item.type == "Map Service") {
+                layer = new TileLayer({
+                    portalItem: item
+                });
+            }
+            break;
+        case "Imagery":
+            layer = new ImageryLayer({
+                portalItem: item
+            });
+            break;
+        case "Tiled Imagery":
+            layer = new ImageryTileLayer({
+                portalItem: item
+            });
+            break;
+        case "Video":
+            layer = new VideoLayer ({
+                portalItem: item
+            });
+            break;
+        case "Media":
+            layer = new MediaLayer({
+                portalItem: item
+            });
+            break;
+        case "Scene":
+            layer = new SceneLayer ({
+                portalItem: item
+            });
+            break;
+        case "":
+            layer = new WCSLayer({
+                portalItem: item
+            });
+            break;
+        default:
+            layer = null;
+            break;
     }
+
+    return layer;
 }
 
 async function addDelLayer() {
     const mapEl = document.getElementById("mapEl");
     const sceneEl = document.getElementById("sceneEl");
     const [
-        PortalItem,
-        esriRequest,
-        FeatureLayer,
-        GroupLayer
+        PortalItem
     ] = await $arcgis.import([
-        "@arcgis/core/portal/PortalItem.js",
-        "@arcgis/core/request.js",
-        "@arcgis/core/layers/FeatureLayer.js",
-        "@arcgis/core/layers/GroupLayer.js"
+        "@arcgis/core/portal/PortalItem.js"
     ]);
     const item = new PortalItem({
         id: this.name
-    })
-    await item.load();
-
-    const { data } = await esriRequest(item.url, {
-        query: { f: "json" },
-        responseType: "json"
     });
-    const layers = (data.layers ?? []);
-
+    await item.load();
     const mapSceneButton = document.getElementById("mapScene-button");
     if (this.innerText == "追加") {
-        let layer;
-        if (layers.length == 1) {
-            layer = new FeatureLayer({
-                portalItem: {
-                    id: this.name
-                }
-            });
-            mapEl.map.add(layer);
+        let layer = returnLayer(item);
+        if (layer) {
+            if (mapSceneButton.iconStart == "2d") {
+                mapEl.map.add(layer);
+            } else if (mapSceneButton.iconStart == "3d") {
+                sceneEl.map.add(layer);
+            }
+            this.innerText = "削除";
+            this.iconStart = "minus";
+            this.kind = "inverse"
         } else {
-            layer = new GroupLayer({
-                portalItem: {
-                    id: this.name
-                }
-            })
+
         }
-        if (mapSceneButton.iconStart == "2d") {
-            mapEl.map.add(layer);
-        } else if (mapSceneButton.iconStart == "3d") {
-            sceneEl.map.add(layer);
-        }
-        this.innerText = "削除";
-        this.iconStart = "minus";
-        this.kind = "inverse"
     } else {
         this.innerText = "追加";
         this.iconStart = "plus";
@@ -132,6 +249,15 @@ async function changeSearchItemList(layerListDiv) {
         layerListDiv.removeChild(layerListDiv.firstChild)
     }
 
+    const mapSceneButton = document.getElementById("mapScene-button");
+    let map;
+    if (mapSceneButton.iconStart == "2d") {
+        map = mapEl.map;
+    } else if (mapSceneButton.iconStart == "3d") {
+        map = sceneEl.map;
+        targetTypes.push(`type: "Scene Service"`)
+    }
+
     const japanExtent = new Extent({
         xmin: 122.93, // 西端 与那国島付近
         ymin: 20.42,  // 南端 沖ノ鳥島付近
@@ -144,10 +270,10 @@ async function changeSearchItemList(layerListDiv) {
     const selItem = document.getElementById("item-search-select");
     const selWord = document.getElementById("item-serach-word");
     let query = "";
-    let getType = '(type: ("Feature Service"))'
+    let getType = `(` + targetTypes.join(" OR ") + `)`
     let ownerUsers = []
     if (selItem.value == "myContents") {
-        query = `owner: ${portal.user.username} ${getType}`
+        query = `owner: ${portal.user.username}`
     } else if (selItem.value == "group") {
         const groups = await portal.user.fetchGroups();
         let groupWhere = "";
@@ -165,10 +291,10 @@ async function changeSearchItemList(layerListDiv) {
         if (cnt != 0) {
             groupWhere = groupWhere + `)`
         }
-        query = `${groupWhere}  ${getType}`
+        query = `${groupWhere}`
     } else if (selItem.value == "organization") {
         let orgWhere = `orgid: ${portal.id}`
-        query = `${orgWhere} ${getType}`
+        query = `${orgWhere}`
     } else if (selItem.value == "livingAtlas") {
         const groups = await portal.queryGroups(new PortalQueryParams({
             query: 'title:"LAW Search" AND owner:Esri_LivingAtlas',
@@ -188,15 +314,13 @@ async function changeSearchItemList(layerListDiv) {
             groupWhere = groupWhere + `)`
         }
         let other = [
-                'type:("Feature Service" OR "Map Service" OR "Image Service" OR "Vector Tile Service")',
-                'culture: ja-jp'
-            ].join(" AND ")
+            'categories: /region/jp'
+        ].join(" AND ")
         query = `${groupWhere} AND ${other}`
     } else if (selItem.value == "agol") {
         query = [
-                'type:("Feature Service" OR "Map Service" OR "Image Service" OR "Vector Tile Service")',
-                'culture: ja-jp'
-            ].join(" AND ")
+            'categories: /region/jp'
+        ].join(" AND ")
     }
 
     if (selWord.value.trim().length > 0) {
@@ -204,22 +328,14 @@ async function changeSearchItemList(layerListDiv) {
         const wordWhere = ` AND (title: ${selKeyWord} OR tags: ${selKeyWord} OR description: ${selKeyWord} OR snippet: ${selKeyWord})`;
         query = query + wordWhere;
     }
-
     const pqp = new PortalQueryParams({
         query: query,
+        filter: getType,
         extent: japanExtent,
         sortField: "title",
         sortOrder: "asc",
-        num: 1000,
+        num: 100,
     });
-
-    const mapSceneButton = document.getElementById("mapScene-button");
-    let map;
-    if (mapSceneButton.iconStart == "2d") {
-        map = mapEl.map;
-    } else if (mapSceneButton.iconStart == "3d") {
-        map = sceneEl.map;
-    }
 
     let results;
     results = await portal.queryItems(pqp);
@@ -281,7 +397,7 @@ async function changeSearchItemList(layerListDiv) {
             figure.slot = "thumbnail";
             const img = document.createElement("img");
             img.classList.add("thumbnail");
-            img.src = result.thumbnailUrl;
+            img.src = result.thumbnailUrl ? result.thumbnailUrl : "./images/no-image.png";
             figure.append(img)
             card.append(figure);
             const labelDiv = document.createElement("div");
@@ -313,7 +429,7 @@ async function changeSearchItemList(layerListDiv) {
             addButton.addEventListener("click", addDelLayer);
             buttonDiv.append(addButton)
             card.append(buttonDiv);
-    
+
             layerListPage.append(card)
         }
     } else {

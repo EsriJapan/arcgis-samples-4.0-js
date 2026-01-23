@@ -58,8 +58,7 @@ const [
     WebTileLayer,
     reactiveUtils,
     Collection,
-    ActionButton,
-    containsOperator
+    ActionButton
 ] = await $arcgis.import([
     "@arcgis/core/layers/VectorTileLayer.js",
     "@arcgis/core/Basemap.js",
@@ -67,8 +66,7 @@ const [
     "@arcgis/core/layers/WebTileLayer.js",
     "@arcgis/core/core/reactiveUtils.js",
     "@arcgis/core/core/Collection.js",
-    "@arcgis/core/support/actions/ActionButton.js",
-    "@arcgis/core/geometry/operators/containsOperator.js"
+    "@arcgis/core/support/actions/ActionButton.js"
 ]);
 
 // arcgis-map のコンポーネントを取得とコンポーネントの準備を待つ
@@ -80,7 +78,6 @@ const loader = document.createElement("calcite-loader");
 loader.label = "loading";
 loader.text = "loading...";
 document.body.appendChild(loader);
-
 const coordsWidget = document.getElementById("coordsWidget")
 const coordsSceneWidget = document.getElementById("coordsSceneWidget")
 function showMapCoordinates(pt) {
@@ -91,7 +88,7 @@ function showMapCoordinates(pt) {
 }
 
 function showSceneCoordinates(pt) {
-    let coords = "Center Lat/Lon " + pt.position.latitude.toFixed(3) + " " + pt.position.longitude.toFixed(3) + " " + pt.position.z.toFixed(3)  + 
+    let coords = "Center Lat/Lon " + pt.position.latitude.toFixed(3) + " " + pt.position.longitude.toFixed(3) + " " + pt.position.z.toFixed(3) +
         " | Tilt " + Math.floor(sceneEl.camera.tilt) +
         " | Heading " + Math.floor(sceneEl.camera.heading) +
         " | Fov " + Math.floor(sceneEl.camera.fov);
@@ -117,11 +114,12 @@ mapEl.addEventListener("arcgisViewReadyChange", () => {
         }
     });
 
-    reactiveUtils.watch(() => mapEl.map.layers.length, function (event) {
+    reactiveUtils.watch(() => [mapEl.map.layers.length, sceneEl.map.layers.length], function (event) {
+        const viewEl = document.getElementById("mapScene-button").iconStart == "2d" ? mapEl : sceneEl;
         const iconDiv = document.getElementById("layer-icon");
         const nonLyrCrd = document.getElementById("non-layer-card");
         const layerView = document.getElementById("layer-list");
-        if (mapEl.map.layers.length > 0) {
+        if (viewEl.map.layers.length > 0) {
             iconDiv.style.display = "none";
             nonLyrCrd.style.display = "none";
             layerView.style.display = "block";
@@ -132,6 +130,13 @@ mapEl.addEventListener("arcgisViewReadyChange", () => {
         }
     });
     sceneEl.style.display = "block";
+    sceneEl.map.ground.surfaceColor = [247, 247, 247, 1]
+    sceneEl.view.environment.background = {
+        type: "color",
+        color: [247, 247, 247, 1]
+    }
+    sceneEl.view.environment.atmosphereEnabled = false;
+    sceneEl.view.environment.starsEnabled = false;
     sceneEl.addEventListener("arcgisViewReadyChange", () => {
         mapEl.style.display = "block";
         reactiveUtils.watch(() => sceneEl.view.stationary, function (event) {
@@ -224,7 +229,25 @@ authButton.addEventListener("click", () => {
 const layerList = document.querySelector("arcgis-layer-list");
 layerList.listItemCreatedFunction = (event) => {
     const { item } = event;
-    const delTargetArray = ["feature", "group", "subtype-group"]
+    const delTargetArray = [
+        "feature",
+        "group",
+        "map-image",
+        "wms",
+        "wfs",
+        "wmts",
+        "wcs",
+        "kml",
+        "vector-tile",
+        "ogc-feature",
+        "tile",
+        "imagery",
+        "imagery-tile",
+        "video",
+        "media",
+        "scene"
+    ];
+
     if (delTargetArray.includes(item.layer.type)) {
         item.actionsSections = new Collection([
             new Collection([
