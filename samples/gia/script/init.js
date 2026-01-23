@@ -245,12 +245,13 @@ layerList.listItemCreatedFunction = (event) => {
         "imagery-tile",
         "video",
         "media",
-        "scene"
+        "scene",
+        "subtype-group"
     ];
 
     if (delTargetArray.includes(item.layer.type)) {
         const eventCollections = new Collection();
-        if (["feature", "group", "map-image", "scene"].includes(item.layer.type)) {
+        if (["feature", "map-image", "scene", "subtype-group"].includes(item.layer.type)) {
             eventCollections.add(
                 new ActionButton({
                     title: "レイヤーにズーム",

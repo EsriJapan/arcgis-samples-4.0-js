@@ -50,6 +50,7 @@ async function returnLayer(item) {
         VideoLayer,
         MediaLayer,
         SceneLayer,
+        esriRequest,
     ] = await $arcgis.import([
         "@arcgis/core/layers/FeatureLayer.js",
         "@arcgis/core/layers/GroupLayer.js",
@@ -67,12 +68,24 @@ async function returnLayer(item) {
         "@arcgis/core/layers/VideoLayer.js",
         "@arcgis/core/layers/MediaLayer.js",
         "@arcgis/core/layers/SceneLayer.js",
+        "@arcgis/core/request.js",
     ]);
     switch (type) {
         case "Feature":
-            layer = new FeatureLayer({
-                portalItem: item
+            const { data } = await esriRequest(item.url, {
+                query: { f: "json" },
+                responseType: "json"
             });
+            const layers = (data.layers ?? []);
+            if (layers.length == 1) {
+                layer = new FeatureLayer({
+                    portalItem: item
+                });
+            } else {
+                layer = new GroupLayer({
+                    portalItem: item
+                })
+            }
             break;
         case "Group":
             layer = new GroupLayer({
@@ -191,7 +204,9 @@ async function addDelLayer() {
                 displayAlert("warning", `${layer.title} レイヤーの取得に失敗しました。`, error.message)
             })
             viewEl.whenLayerView(layer).then(async (layerView) => {
-                if (viewEl.map.layers.length == 1 && ["feature", "group", "map-image", "scene"].includes(layer.type)) {
+                if (viewEl.map.layers.length == 1 && 
+                    ["feature", "group", "map-image", "scene"].includes(layer.type) && 
+                    layer.fullExtent) {
                     await viewEl.goTo(layer.fullExtent);
                 }
                 this.innerText = "削除";
