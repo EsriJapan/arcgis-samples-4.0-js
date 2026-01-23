@@ -172,6 +172,12 @@ function changeMapMode() {
     const iconDiv = document.getElementById("layer-icon");
     const nonLyrCrd = document.getElementById("non-layer-card");
     const layerView = document.getElementById("layer-list");
+    const layerFlow = document.querySelector(`[data-flow-id="layer"]`);
+    console.log("layerFlow.children", layerFlow.children)
+    if (layerFlow.children.length > 1) {
+        layerFlow.back();
+        layerFlow.lastElementChild.remove();
+    }
     if (viewEl.map.layers.length > 0) {
         iconDiv.style.display = "none";
         nonLyrCrd.style.display = "none";
