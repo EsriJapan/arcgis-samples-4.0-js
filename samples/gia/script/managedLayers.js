@@ -30,7 +30,7 @@ const targetTypes = [
     `type:"GeoJson"`
 ]
 
-async function returnLayer(item) {
+async function returnLayer(item, viewMode) {
     let layer;
     const type = item.displayName.replace(" Layer", "");
     const [
@@ -50,6 +50,7 @@ async function returnLayer(item) {
         VideoLayer,
         MediaLayer,
         SceneLayer,
+        SubtypeGroupLayer,
         esriRequest,
     ] = await $arcgis.import([
         "@arcgis/core/layers/FeatureLayer.js",
@@ -68,8 +69,18 @@ async function returnLayer(item) {
         "@arcgis/core/layers/VideoLayer.js",
         "@arcgis/core/layers/MediaLayer.js",
         "@arcgis/core/layers/SceneLayer.js",
+        "@arcgis/core/layers/SubtypeGroupLayer.js",
         "@arcgis/core/request.js",
     ]);
+    const onTheGroundTarget = [
+        "feature",
+        "ogc-feature",
+        "wfs",
+        "kml",
+        "wms",
+        "map-image",
+        "group"
+    ];
     switch (type) {
         case "Feature":
             const { data } = await esriRequest(item.url, {
@@ -84,7 +95,7 @@ async function returnLayer(item) {
             } else {
                 layer = new GroupLayer({
                     portalItem: item
-                })
+                });
             }
             break;
         case "Group":
@@ -163,8 +174,8 @@ async function returnLayer(item) {
                 portalItem: item
             });
             break;
-        case "":
-            layer = new WCSLayer({
+        case "Subtype Group":
+            layer = new SubtypeGroupLayer({
                 portalItem: item
             });
             break;
@@ -173,6 +184,27 @@ async function returnLayer(item) {
             break;
     }
 
+    if (layer && onTheGroundTarget.includes(layer.type)) {
+        if (layer.type != "group" && layer.type != "map-image") {
+            layer.elevationInfo = {
+                mode: "relative-to-ground"
+            }
+        } else if (layer.type == "group") {
+            layer.layers.forEach(item => {
+                if (onTheGroundTarget.includes(item.type)) {
+                    item.elevationInfo = {
+                        mode: "relative-to-ground"
+                    }
+                }
+            })
+        } else if (layer.type == "map-image") {
+            layer.subLayer.forEach(item => {
+                item.elevationInfo = {
+                    mode: "relative-to-ground"
+                }
+            })
+        }
+    }
     return layer;
 }
 
@@ -190,7 +222,7 @@ async function addDelLayer() {
     await item.load();
     const mapSceneButton = document.getElementById("mapScene-button");
     if (this.innerText == "追加") {
-        let layer = await returnLayer(item);
+        let layer = await returnLayer(item, mapSceneButton.iconStart);
         if (layer) {
             let viewEl;
             if (mapSceneButton.iconStart == "2d") {
@@ -204,8 +236,8 @@ async function addDelLayer() {
                 displayAlert("warning", `${layer.title} レイヤーの取得に失敗しました。`, error.message)
             })
             viewEl.whenLayerView(layer).then(async (layerView) => {
-                if (viewEl.map.layers.length == 1 && 
-                    ["feature", "group", "map-image", "scene"].includes(layer.type) && 
+                if (viewEl.map.layers.length == 1 &&
+                    ["feature", "group", "map-image", "scene"].includes(layer.type) &&
                     layer.fullExtent) {
                     await viewEl.goTo(layer.fullExtent);
                 }
